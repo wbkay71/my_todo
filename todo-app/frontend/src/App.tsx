@@ -266,6 +266,25 @@ function App() {
     }, activeTab !== 'todos' ? 300 : 100);
   };
 
+  const handleNavigateToCategories = () => {
+    // Zum Kategorien-Tab wechseln
+    setActiveTab('categories');
+    
+    // Kurz warten und dann zum Category Management scrollen
+    setTimeout(() => {
+      const categoryManagement = document.querySelector('.category-management');
+      if (categoryManagement) {
+        categoryManagement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      } else {
+        // Fallback: Scroll zum Anfang der Seite
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 200);
+  };
+
   if (loading) {
     return (
       <div className="app">
@@ -390,6 +409,7 @@ function App() {
               todos={filteredTodos}
               onUpdateTodo={handleUpdateTodo}
               onDeleteTodo={handleDeleteTodo}
+              onNavigateToCategories={handleNavigateToCategories}
             />
           </div>
         ) : (

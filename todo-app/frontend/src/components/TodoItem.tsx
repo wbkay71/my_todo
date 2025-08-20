@@ -8,9 +8,10 @@ interface TodoItemProps {
   todo: TodoWithCategories;
   onUpdateTodo: (id: number, updates: Partial<TodoWithCategories>) => void;
   onDeleteTodo: (id: number) => void;
+  onNavigateToCategories?: () => void;
 }
 
-const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo }) => {
+const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo, onNavigateToCategories }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
@@ -101,8 +102,10 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
             {todo.categories.map((category) => (
               <span
                 key={category.id}
-                className="category-badge"
+                className="category-badge clickable-badge"
                 style={{ backgroundColor: category.color }}
+                onClick={onNavigateToCategories}
+                title={`Zur Kategorienverwaltung springen (${category.name})`}
               >
                 🏷️ {category.name}
               </span>

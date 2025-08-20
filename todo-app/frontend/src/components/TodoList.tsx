@@ -6,9 +6,10 @@ interface TodoListProps {
   todos: TodoWithCategories[];
   onUpdateTodo: (id: number, updates: Partial<TodoWithCategories>) => void;
   onDeleteTodo: (id: number) => void;
+  onNavigateToCategories?: () => void;
 }
 
-const TodoList: React.FC<TodoListProps> = ({ todos, onUpdateTodo, onDeleteTodo }) => {
+const TodoList: React.FC<TodoListProps> = ({ todos, onUpdateTodo, onDeleteTodo, onNavigateToCategories }) => {
   if (todos.length === 0) {
     return (
       <div className="todo-list">
@@ -50,6 +51,7 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onUpdateTodo, onDeleteTodo }
                   todo={todo}
                   onUpdateTodo={onUpdateTodo}
                   onDeleteTodo={onDeleteTodo}
+                  onNavigateToCategories={onNavigateToCategories}
                 />
               ))}
             </div>
