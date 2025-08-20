@@ -226,6 +226,49 @@
   color: #2c3e50;
 }
 
+/* Priority Slider */
+.priority-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.priority-slider:hover {
+  opacity: 1;
+}
+
+.priority-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3498db;
+  cursor: pointer;
+}
+
+.priority-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3498db;
+  cursor: pointer;
+  border: none;
+}
+
+.priority-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
 /* Todo List */
 .todo-list {
   background: white;
@@ -325,6 +368,37 @@
 .todo-description {
   margin-bottom: 1rem;
   color: #666;
+}
+
+/* Due Date Styles */
+.todo-due-date {
+  margin-bottom: 1rem;
+}
+
+.due-date-display {
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border-left: 3px solid #3498db;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.due-date-display.due-today {
+  background-color: #fff3cd;
+  border-left-color: #f39c12;
+  color: #856404;
+}
+
+.due-today-indicator {
+  margin-left: 0.5rem;
+  font-weight: bold;
+  color: #f39c12;
+}
+
+.edit-due-date-input {
+  width: 100%;
+  margin-top: 0.25rem;
 }
 
 .edit-description-input {

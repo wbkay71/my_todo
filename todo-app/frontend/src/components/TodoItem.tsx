@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Todo } from '../types';
+import { formatSmartDate, formatDateForDisplay, formatDateForInput, isToday } from '../utils/timezone';
 
 interface TodoItemProps {
   todo: Todo;
@@ -11,6 +12,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
+  const [editDueDate, setEditDueDate] = useState(todo.due_date ? formatDateForInput(todo.due_date) : '');
 
   const handleStatusChange = (newStatus: Todo['status']) => {
     onUpdateTodo(todo.id, { status: newStatus });
@@ -24,7 +26,8 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
     if (editTitle.trim()) {
       onUpdateTodo(todo.id, {
         title: editTitle.trim(),
-        description: editDescription.trim() || undefined
+        description: editDescription.trim() || undefined,
+        due_date: editDueDate || undefined
       });
       setIsEditing(false);
     }
@@ -33,18 +36,11 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
   const handleCancelEdit = () => {
     setEditTitle(todo.title);
     setEditDescription(todo.description || '');
+    setEditDueDate(todo.due_date ? formatDateForInput(todo.due_date) : '');
     setIsEditing(false);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Removed old formatDate function - using timezone utilities now
 
   const getPriorityColor = (priority: number) => {
     if (priority >= 8) return '#ff4444';
@@ -90,6 +86,28 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
             />
           ) : (
             <p>{todo.description}</p>
+          )}
+        </div>
+      )}
+
+      {(todo.due_date || isEditing) && (
+        <div className="todo-due-date">
+          {isEditing ? (
+            <>
+              <label htmlFor={`dueDate-${todo.id}`}>Fälligkeitsdatum:</label>
+              <input
+                type="date"
+                id={`dueDate-${todo.id}`}
+                value={editDueDate}
+                onChange={(e) => setEditDueDate(e.target.value)}
+                className="edit-due-date-input"
+              />
+            </>
+          ) : todo.due_date && (
+            <div className={`due-date-display ${isToday(todo.due_date) ? 'due-today' : ''}`}>
+              📅 Fällig: {formatDateForDisplay(todo.due_date)}
+              {isToday(todo.due_date) && <span className="due-today-indicator">Heute!</span>}
+            </div>
           )}
         </div>
       )}
@@ -153,9 +171,9 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
 
       <div className="todo-meta">
         <small>
-          Erstellt: {formatDate(todo.created_at)}
+          Erstellt: {formatSmartDate(todo.created_at)}
           {todo.updated_at !== todo.created_at && (
-            <span> • Aktualisiert: {formatDate(todo.updated_at)}</span>
+            <span> • Aktualisiert: {formatSmartDate(todo.updated_at)}</span>
           )}
         </small>
       </div>

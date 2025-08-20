@@ -73,7 +73,7 @@ function App() {
     console.log('Benutzer erfolgreich abgemeldet');
   };
 
-  const handleCreateTodo = async (todoData: { title: string; description?: string }) => {
+  const handleCreateTodo = async (todoData: { title: string; description?: string; due_date?: string; priority?: number }) => {
     try {
       const { todo } = await apiClient.createTodo(todoData);
       setTodos([todo, ...todos]);

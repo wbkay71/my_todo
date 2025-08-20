@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
+import { convertLocalDateToUTC } from '../utils/timezone';
 
 interface TodoFormProps {
-  onCreateTodo: (todoData: { title: string; description?: string }) => void;
+  onCreateTodo: (todoData: { title: string; description?: string; due_date?: string; priority?: number }) => void;
 }
 
 const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [priority, setPriority] = useState(0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,10 +17,14 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
     if (title.trim()) {
       onCreateTodo({
         title: title.trim(),
-        description: description.trim() || undefined
+        description: description.trim() || undefined,
+        due_date: dueDate ? convertLocalDateToUTC(dueDate) : undefined,
+        priority
       });
       setTitle('');
       setDescription('');
+      setDueDate('');
+      setPriority(0);
     }
   };
 
@@ -44,6 +51,31 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
           placeholder="Weitere Details..."
           rows={3}
         />
+      </div>
+      <div className="form-group">
+        <label htmlFor="dueDate">Fälligkeitsdatum (optional):</label>
+        <input
+          type="date"
+          id="dueDate"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="priority">Priorität: {priority}</label>
+        <input
+          type="range"
+          id="priority"
+          min="0"
+          max="10"
+          value={priority}
+          onChange={(e) => setPriority(parseInt(e.target.value))}
+          className="priority-slider"
+        />
+        <div className="priority-labels">
+          <span>Niedrig (0)</span>
+          <span>Hoch (10)</span>
+        </div>
       </div>
       <button type="submit" className="submit-button">
         Todo hinzufügen
