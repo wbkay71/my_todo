@@ -69,6 +69,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
           id="dueDate"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
+          step="900"
         />
       </div>
                     <div className="form-group">

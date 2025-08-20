@@ -132,6 +132,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
                 value={editDueDate}
                 onChange={(e) => setEditDueDate(e.target.value)}
                 className="edit-due-date-input"
+                step="900"
               />
             </>
           ) : todo.due_date && (
