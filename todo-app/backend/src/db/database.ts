@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import Database, { Database as DatabaseType } from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
 import dotenv from 'dotenv';
@@ -9,7 +9,7 @@ const dbPath = process.env.DATABASE_PATH || './database.sqlite';
 const schemaPath = path.join(__dirname, 'schema.sql');
 
 // Erstelle Datenbankverbindung
-const db = new Database(dbPath);
+const db: DatabaseType = new Database(dbPath);
 
 // Aktiviere Foreign Key Constraints
 db.pragma('foreign_keys = ON');

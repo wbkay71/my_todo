@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 
 interface LoginFormProps {
-  onLogin: (credentials: { email: string; password: string }) => void;
+  onLogin: (credentials: { email: string; password: string; rememberMe?: boolean }) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim() && password.trim()) {
-      onLogin({ email: email.trim(), password });
+      onLogin({ email: email.trim(), password, rememberMe });
     }
   };
 
@@ -37,6 +38,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+      </div>
+      <div className="form-group">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
+          <span className="checkbox-text">Angemeldet bleiben (30 Tage)</span>
+        </label>
       </div>
       <button type="submit" className="submit-button">
         Anmelden

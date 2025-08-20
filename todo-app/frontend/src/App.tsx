@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import apiClient from './api/client';
 import { User, Todo } from './types';
 import LoginForm from './components/LoginForm';
@@ -43,7 +43,7 @@ function App() {
     }
   };
 
-  const handleLogin = async (credentials: { email: string; password: string }) => {
+  const handleLogin = async (credentials: { email: string; password: string; rememberMe?: boolean }) => {
     try {
       setError(null);
       const { user } = await apiClient.login(credentials);
@@ -69,6 +69,8 @@ function App() {
     apiClient.logout();
     setUser(null);
     setTodos([]);
+    setError(null);
+    console.log('Benutzer erfolgreich abgemeldet');
   };
 
   const handleCreateTodo = async (todoData: { title: string; description?: string }) => {
@@ -157,8 +159,14 @@ function App() {
       <header className="app-header">
         <h1>ToDo App</h1>
         <div className="user-info">
-          <span>Willkommen, {user.name || user.email}!</span>
-          <button onClick={handleLogout} className="logout-button">
+          <div className="user-details">
+            <span className="user-greeting">Willkommen!</span>
+            <span className="user-name">{user.name || user.email}</span>
+            {apiClient.getTokenInfo().isPersistent && (
+              <span className="session-indicator">🔐 Dauerhaft angemeldet</span>
+            )}
+          </div>
+          <button onClick={handleLogout} className="logout-button" title="Abmelden">
             Abmelden
           </button>
         </div>

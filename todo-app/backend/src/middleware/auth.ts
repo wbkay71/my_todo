@@ -69,7 +69,7 @@ export const authenticateToken = async (
   }
 };
 
-export const generateToken = (user: { id: number; email: string }): string => {
+export const generateToken = (user: { id: number; email: string }, rememberMe: boolean = false): string => {
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     throw new Error('JWT_SECRET ist nicht gesetzt!');
@@ -80,7 +80,10 @@ export const generateToken = (user: { id: number; email: string }): string => {
     email: user.email
   };
 
+  // Wenn rememberMe true ist, Token für 30 Tage, sonst 24 Stunden
+  const expiresIn = rememberMe ? '30d' : '24h';
+
   return jwt.sign(payload, jwtSecret, { 
-    expiresIn: '24h' 
+    expiresIn 
   });
 };

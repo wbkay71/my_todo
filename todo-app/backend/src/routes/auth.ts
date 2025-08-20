@@ -69,7 +69,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 // POST /api/auth/login
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password }: LoginRequest = req.body;
+    const { email, password, rememberMe }: LoginRequest = req.body;
 
     // Validierung
     if (!email || !password) {
@@ -97,8 +97,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generiere Token
-    const token = generateToken({ id: user.id, email: user.email });
+    // Generiere Token mit RememberMe-Option
+    const token = generateToken({ id: user.id, email: user.email }, rememberMe);
 
     const response: AuthResponse = {
       user: {

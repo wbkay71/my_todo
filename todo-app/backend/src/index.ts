@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { initializeDatabase } from './db/database';
 import authRoutes from './routes/auth';
 import todoRoutes from './routes/todos';
+import categoryRoutes from './routes/categories';
 
 // Lade Umgebungsvariablen
 dotenv.config();
@@ -29,6 +30,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Routen
 app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Health Check
 app.get('/health', (req: Request, res: Response) => {
@@ -47,6 +49,7 @@ app.get('/', (req: Request, res: Response) => {
     endpoints: {
       auth: '/api/auth',
       todos: '/api/todos',
+      categories: '/api/categories',
       health: '/health'
     }
   });

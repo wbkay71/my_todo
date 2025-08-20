@@ -8,8 +8,7 @@ import {
   UpdateTodoRequest,
   AuthResponse,
   TodosResponse,
-  TodoResponse,
-  ApiError
+  TodoResponse
 } from '../types';
 
 class ApiClient {
@@ -54,27 +53,43 @@ class ApiClient {
 
   // Token-Management
   private getToken(): string | null {
-    return localStorage.getItem('token');
+    // Prüfe zuerst localStorage, dann sessionStorage
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
   }
 
-  private setToken(token: string): void {
-    localStorage.setItem('token', token);
+  private setToken(token: string, rememberMe: boolean = false): void {
+    // Entferne Token aus beiden Speichern zuerst
+    this.removeToken();
+    
+    // Speichere im entsprechenden Storage
+    if (rememberMe) {
+      localStorage.setItem('token', token);
+    } else {
+      sessionStorage.setItem('token', token);
+    }
   }
 
   private removeToken(): void {
     localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+  }
+
+  private getTokenStorage(): 'localStorage' | 'sessionStorage' | null {
+    if (localStorage.getItem('token')) return 'localStorage';
+    if (sessionStorage.getItem('token')) return 'sessionStorage';
+    return null;
   }
 
   // Auth-Endpoints
   async register(userData: CreateUserRequest): Promise<AuthResponse> {
     const response: AxiosResponse<AuthResponse> = await this.api.post('/auth/register', userData);
-    this.setToken(response.data.token);
+    this.setToken(response.data.token, false); // Registration defaults to session storage
     return response.data;
   }
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     const response: AxiosResponse<AuthResponse> = await this.api.post('/auth/login', credentials);
-    this.setToken(response.data.token);
+    this.setToken(response.data.token, credentials.rememberMe || false);
     return response.data;
   }
 
@@ -120,6 +135,19 @@ class ApiClient {
   // Utility-Methoden
   isAuthenticated(): boolean {
     return !!this.getToken();
+  }
+
+  getTokenInfo(): { 
+    hasToken: boolean; 
+    storage: 'localStorage' | 'sessionStorage' | null;
+    isPersistent: boolean;
+  } {
+    const storage = this.getTokenStorage();
+    return {
+      hasToken: !!this.getToken(),
+      storage,
+      isPersistent: storage === 'localStorage'
+    };
   }
 
   async healthCheck(): Promise<{ status: string; timestamp: string; version: string }> {

@@ -1,23 +1,25 @@
 import db from '../db/database';
-import { Todo, CreateTodoRequest, UpdateTodoRequest, TodoWithLabels, Label } from '../types';
+import { Todo, CreateTodoRequest, UpdateTodoRequest, TodoWithLabels, TodoWithCategory, Label, Category } from '../types';
+import { convertDatesForDisplay } from '../utils/timezone';
 
 export class TodoModel {
   static create = (userId: number, todoData: CreateTodoRequest): Todo => {
-    const { title, description, status = 'open', priority = 0, due_date } = todoData;
+    const { title, description, status = 'open', priority = 0, due_date, category_id } = todoData;
 
     const stmt = db.prepare(`
-      INSERT INTO todos (user_id, title, description, status, priority, due_date)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO todos (user_id, title, description, status, priority, due_date, category_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
-    const result = stmt.run(userId, title, description || null, status, priority, due_date || null);
+    const result = stmt.run(userId, title, description || null, status, priority, due_date || null, category_id || null);
     
     return this.findById(result.lastInsertRowid as number)!;
   };
 
   static findById = (id: number): Todo | null => {
     const stmt = db.prepare('SELECT * FROM todos WHERE id = ?');
-    return stmt.get(id) as Todo | null;
+    const todo = stmt.get(id) as Todo | null;
+    return todo ? convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']) : null;
   };
 
   static findByUserId = (userId: number): Todo[] => {
@@ -26,7 +28,8 @@ export class TodoModel {
       WHERE user_id = ? 
       ORDER BY created_at DESC
     `);
-    return stmt.all(userId) as Todo[];
+    const todos = stmt.all(userId) as Todo[];
+    return todos.map(todo => convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']));
   };
 
   static findByUserIdWithLabels = (userId: number): TodoWithLabels[] => {
@@ -38,6 +41,51 @@ export class TodoModel {
     });
   };
 
+  static findByUserIdWithCategory = (userId: number): TodoWithCategory[] => {
+    const stmt = db.prepare(`
+      SELECT 
+        t.*,
+        c.id as category_id,
+        c.name as category_name,
+        c.color as category_color,
+        c.user_id as category_user_id,
+        c.created_at as category_created_at
+      FROM todos t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.user_id = ? 
+      ORDER BY t.created_at DESC
+    `);
+    
+    const rows = stmt.all(userId) as any[];
+    
+          return rows.map(row => {
+      const todo: TodoWithCategory = convertDatesForDisplay({
+        id: row.id,
+        user_id: row.user_id,
+        title: row.title,
+        description: row.description,
+        status: row.status,
+        priority: row.priority,
+        due_date: row.due_date,
+        category_id: row.category_id,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      }, ['created_at', 'updated_at', 'due_date']);
+
+      if (row.category_id) {
+        todo.category = convertDatesForDisplay({
+          id: row.category_id,
+          name: row.category_name,
+          color: row.category_color,
+          user_id: row.category_user_id,
+          created_at: row.category_created_at
+        }, ['created_at']);
+      }
+
+      return todo;
+    });
+  };
+
   static update = (id: number, userId: number, todoData: UpdateTodoRequest): Todo | null => {
     // Prüfe ob Todo dem User gehört
     const existingTodo = this.findById(id);
@@ -45,7 +93,7 @@ export class TodoModel {
       return null;
     }
 
-    const { title, description, status, priority, due_date } = todoData;
+    const { title, description, status, priority, due_date, category_id } = todoData;
     const updates: string[] = [];
     const values: any[] = [];
 
@@ -68,6 +116,10 @@ export class TodoModel {
     if (due_date !== undefined) {
       updates.push('due_date = ?');
       values.push(due_date);
+    }
+    if (category_id !== undefined) {
+      updates.push('category_id = ?');
+      values.push(category_id);
     }
 
     if (updates.length === 0) {
@@ -132,7 +184,8 @@ export class TodoModel {
       WHERE user_id = ? AND status = ?
       ORDER BY created_at DESC
     `);
-    return stmt.all(userId, status) as Todo[];
+    const todos = stmt.all(userId, status) as Todo[];
+    return todos.map(todo => convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']));
   };
 
   static findByPriority = (userId: number, minPriority: number): Todo[] => {
@@ -141,6 +194,7 @@ export class TodoModel {
       WHERE user_id = ? AND priority >= ?
       ORDER BY priority DESC, created_at DESC
     `);
-    return stmt.all(userId, minPriority) as Todo[];
+    const todos = stmt.all(userId, minPriority) as Todo[];
+    return todos.map(todo => convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']));
   };
 }

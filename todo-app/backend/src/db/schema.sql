@@ -3,7 +3,16 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(255),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT (datetime('now', 'utc'))
+);
+
+CREATE TABLE categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(100) NOT NULL,
+    color VARCHAR(7) DEFAULT '#3498db',
+    user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT (datetime('now', 'utc')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE todos (
@@ -14,9 +23,11 @@ CREATE TABLE todos (
     status VARCHAR(50) DEFAULT 'open',
     priority INTEGER DEFAULT 0,
     due_date DATE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    category_id INTEGER,
+    created_at DATETIME DEFAULT (datetime('now', 'utc')),
+    updated_at DATETIME DEFAULT (datetime('now', 'utc')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
 CREATE TABLE labels (
