@@ -9,6 +9,28 @@ const BERLIN_TIMEZONE = 'Europe/Berlin';
  */
 
 /**
+ * Konvertiert SQLite Datum zu ISO-8601 UTC Format
+ * SQLite: "2025-08-20 08:27:54" → ISO: "2025-08-20T08:27:54Z"
+ */
+const normalizeToUTC = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  let normalized = dateString;
+  
+  // SQLite Format (mit Leerzeichen) zu ISO-8601 (mit T)
+  if (normalized.includes(' ') && !normalized.includes('T')) {
+    normalized = normalized.replace(' ', 'T');
+  }
+  
+  // UTC Marker hinzufügen falls nicht vorhanden
+  if (!normalized.endsWith('Z') && !normalized.includes('+')) {
+    normalized = normalized + 'Z';
+  }
+  
+  return normalized;
+};
+
+/**
  * Formatiert ein UTC-Datum für die Anzeige in Berlin-Zeit
  */
 export const formatDateForDisplay = (utcDateString: string): string => {
@@ -45,7 +67,8 @@ export const formatTimeForDisplay = (utcDateString: string): string => {
   if (!utcDateString) return '';
   
   try {
-    const date = parseISO(utcDateString);
+    const dateToFormat = normalizeToUTC(utcDateString);
+    const date = parseISO(dateToFormat);
     return formatInTimeZone(date, BERLIN_TIMEZONE, 'HH:mm', { locale: de });
   } catch (error) {
     console.error('Fehler beim Formatieren der Zeit:', error);
@@ -103,12 +126,12 @@ export const convertLocalDateToUTC = (localDateString: string): string => {
   if (!localDateString) return '';
   
   try {
-    // Interpretiere als Berlin-Zeit
-    const date = new Date(localDateString + 'T00:00:00');
-    return date.toISOString();
+    // HTML5 Date-Input gibt YYYY-MM-DD zurück
+    // Wir senden dieses Format direkt an das Backend
+    return localDateString;
   } catch (error) {
     console.error('Fehler beim Konvertieren zu UTC:', error);
-    return new Date().toISOString();
+    return '';
   }
 };
 
@@ -119,7 +142,8 @@ export const isToday = (utcDateString: string): boolean => {
   if (!utcDateString) return false;
   
   try {
-    const date = parseISO(utcDateString);
+    const dateToFormat = normalizeToUTC(utcDateString);
+    const date = parseISO(dateToFormat);
     const today = new Date();
     const dateInBerlin = formatInTimeZone(date, BERLIN_TIMEZONE, 'yyyy-MM-dd');
     const todayInBerlin = formatInTimeZone(today, BERLIN_TIMEZONE, 'yyyy-MM-dd');

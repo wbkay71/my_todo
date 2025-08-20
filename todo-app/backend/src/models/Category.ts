@@ -1,6 +1,5 @@
 import db from '../db/database';
 import { Category, CreateCategoryRequest, UpdateCategoryRequest } from '../types';
-import { convertDatesForDisplay } from '../utils/timezone';
 
 export class CategoryModel {
   static create = (userId: number, categoryData: CreateCategoryRequest): Category => {
@@ -18,8 +17,7 @@ export class CategoryModel {
 
   static findById = (id: number): Category | null => {
     const stmt = db.prepare('SELECT * FROM categories WHERE id = ?');
-    const category = stmt.get(id) as Category | null;
-    return category ? convertDatesForDisplay(category, ['created_at']) : null;
+    return stmt.get(id) as Category | null;
   };
 
   static findByUserId = (userId: number): Category[] => {
@@ -28,8 +26,7 @@ export class CategoryModel {
       WHERE user_id = ? 
       ORDER BY name ASC
     `);
-    const categories = stmt.all(userId) as Category[];
-    return categories.map(category => convertDatesForDisplay(category, ['created_at']));
+    return stmt.all(userId) as Category[];
   };
 
   static findByUserIdAndName = (userId: number, name: string): Category | null => {
@@ -37,8 +34,7 @@ export class CategoryModel {
       SELECT * FROM categories 
       WHERE user_id = ? AND LOWER(name) = LOWER(?)
     `);
-    const category = stmt.get(userId, name) as Category | null;
-    return category ? convertDatesForDisplay(category, ['created_at']) : null;
+    return stmt.get(userId, name) as Category | null;
   };
 
   static update = (id: number, userId: number, categoryData: UpdateCategoryRequest): Category | null => {
@@ -111,8 +107,7 @@ export class CategoryModel {
       GROUP BY c.id
       ORDER BY c.name ASC
     `);
-    const categories = stmt.all(userId) as (Category & { usage_count: number })[];
-    return categories.map(category => convertDatesForDisplay(category, ['created_at']));
+    return stmt.all(userId) as (Category & { usage_count: number })[];
   };
 
   static getDefaultColors = (): string[] => {

@@ -1,25 +1,29 @@
 import db from '../db/database';
 import { Todo, CreateTodoRequest, UpdateTodoRequest, TodoWithLabels, TodoWithCategory, Label, Category } from '../types';
-import { convertDatesForDisplay } from '../utils/timezone';
 
 export class TodoModel {
   static create = (userId: number, todoData: CreateTodoRequest): Todo => {
     const { title, description, status = 'open', priority = 0, due_date, category_id } = todoData;
 
+    const nowUtc = new Date().toISOString();
+    
     const stmt = db.prepare(`
-      INSERT INTO todos (user_id, title, description, status, priority, due_date, category_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO todos (user_id, title, description, status, priority, due_date, category_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    const result = stmt.run(userId, title, description || null, status, priority, due_date || null, category_id || null);
+    // Verwende JavaScript UTC-Zeit statt SQLite-Funktion
+    const utcTimestamp = nowUtc.replace('T', ' ').replace('Z', '');
+    const result = stmt.run(userId, title, description || null, status, priority, due_date || null, category_id || null, utcTimestamp, utcTimestamp);
     
-    return this.findById(result.lastInsertRowid as number)!;
+    const createdTodo = this.findById(result.lastInsertRowid as number)!;
+    
+    return createdTodo;
   };
 
   static findById = (id: number): Todo | null => {
     const stmt = db.prepare('SELECT * FROM todos WHERE id = ?');
-    const todo = stmt.get(id) as Todo | null;
-    return todo ? convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']) : null;
+    return stmt.get(id) as Todo | null;
   };
 
   static findByUserId = (userId: number): Todo[] => {
@@ -28,8 +32,7 @@ export class TodoModel {
       WHERE user_id = ? 
       ORDER BY created_at DESC
     `);
-    const todos = stmt.all(userId) as Todo[];
-    return todos.map(todo => convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']));
+    return stmt.all(userId) as Todo[];
   };
 
   static findByUserIdWithLabels = (userId: number): TodoWithLabels[] => {
@@ -59,7 +62,7 @@ export class TodoModel {
     const rows = stmt.all(userId) as any[];
     
           return rows.map(row => {
-      const todo: TodoWithCategory = convertDatesForDisplay({
+      const todo: TodoWithCategory = {
         id: row.id,
         user_id: row.user_id,
         title: row.title,
@@ -70,16 +73,16 @@ export class TodoModel {
         category_id: row.category_id,
         created_at: row.created_at,
         updated_at: row.updated_at
-      }, ['created_at', 'updated_at', 'due_date']);
+      };
 
       if (row.category_id) {
-        todo.category = convertDatesForDisplay({
+        todo.category = {
           id: row.category_id,
           name: row.category_name,
           color: row.category_color,
           user_id: row.category_user_id,
           created_at: row.category_created_at
-        }, ['created_at']);
+        };
       }
 
       return todo;
@@ -184,8 +187,7 @@ export class TodoModel {
       WHERE user_id = ? AND status = ?
       ORDER BY created_at DESC
     `);
-    const todos = stmt.all(userId, status) as Todo[];
-    return todos.map(todo => convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']));
+    return stmt.all(userId, status) as Todo[];
   };
 
   static findByPriority = (userId: number, minPriority: number): Todo[] => {
@@ -194,7 +196,6 @@ export class TodoModel {
       WHERE user_id = ? AND priority >= ?
       ORDER BY priority DESC, created_at DESC
     `);
-    const todos = stmt.all(userId, minPriority) as Todo[];
-    return todos.map(todo => convertDatesForDisplay(todo, ['created_at', 'updated_at', 'due_date']));
+    return stmt.all(userId, minPriority) as Todo[];
   };
 }

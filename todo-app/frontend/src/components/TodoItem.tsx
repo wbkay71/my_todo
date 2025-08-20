@@ -24,11 +24,15 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
 
   const handleSaveEdit = () => {
     if (editTitle.trim()) {
-      onUpdateTodo(todo.id, {
+      const updateData = {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
-        due_date: editDueDate || undefined
-      });
+        due_date: editDueDate || undefined // HTML5 Date gibt bereits YYYY-MM-DD zurück
+      };
+      
+      console.log('Updating todo with data:', updateData); // Debug log
+      
+      onUpdateTodo(todo.id, updateData);
       setIsEditing(false);
     }
   };

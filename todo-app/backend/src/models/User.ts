@@ -1,6 +1,5 @@
 import db from '../db/database';
 import { User, CreateUserRequest } from '../types';
-import { convertDatesForDisplay } from '../utils/timezone';
 import bcrypt from 'bcrypt';
 
 export class UserModel {
@@ -24,14 +23,12 @@ export class UserModel {
 
   static findByEmail = (email: string): User | null => {
     const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-    const user = stmt.get(email) as User | null;
-    return user ? convertDatesForDisplay(user) : null;
+    return stmt.get(email) as User | null;
   };
 
   static findById = (id: number): User | null => {
     const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-    const user = stmt.get(id) as User | null;
-    return user ? convertDatesForDisplay(user) : null;
+    return stmt.get(id) as User | null;
   };
 
   static validatePassword = (password: string, hash: string): boolean => {

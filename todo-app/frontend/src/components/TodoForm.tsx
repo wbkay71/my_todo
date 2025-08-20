@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { convertLocalDateToUTC } from '../utils/timezone';
 
 interface TodoFormProps {
   onCreateTodo: (todoData: { title: string; description?: string; due_date?: string; priority?: number }) => void;
@@ -15,12 +14,16 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
     e.preventDefault();
     
     if (title.trim()) {
-      onCreateTodo({
+      const todoData = {
         title: title.trim(),
         description: description.trim() || undefined,
-        due_date: dueDate ? convertLocalDateToUTC(dueDate) : undefined,
+        due_date: dueDate || undefined, // HTML5 Date gibt bereits YYYY-MM-DD zurück
         priority
-      });
+      };
+      
+      console.log('Sending todo data:', todoData); // Debug log
+      
+      onCreateTodo(todoData);
       setTitle('');
       setDescription('');
       setDueDate('');
