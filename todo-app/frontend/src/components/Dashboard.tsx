@@ -5,7 +5,17 @@ import { isOverdue, isToday } from '../utils/timezone';
 interface DashboardProps {
   todos: TodoWithCategories[];
   categories: Category[];
+  onFilterChange?: (filter: TodoFilter) => void;
 }
+
+export type TodoFilter = 
+  | 'all'
+  | 'open' 
+  | 'in_progress'
+  | 'completed_today'
+  | 'overdue'
+  | 'this_week'
+  | { category: number };
 
 interface StatusCounts {
   open: number;
@@ -23,7 +33,7 @@ interface CategoryStats {
   };
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ todos, categories }) => {
+const Dashboard: React.FC<DashboardProps> = ({ todos, categories, onFilterChange }) => {
   // Status-Zähler berechnen
   const getStatusCounts = (): StatusCounts => {
     const today = new Date();
@@ -106,13 +116,29 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories }) => {
 
   const maxCategoryCount = Math.max(...sortedCategories.map(cat => cat.count), 1);
 
+  const handleStatusClick = (filter: TodoFilter) => {
+    if (onFilterChange) {
+      onFilterChange(filter);
+    }
+  };
+
+  const handleCategoryClick = (categoryId: number) => {
+    if (onFilterChange) {
+      onFilterChange({ category: categoryId });
+    }
+  };
+
   return (
     <div className="dashboard">
       <h2 className="dashboard-title">📊 Dashboard</h2>
       
       {/* Status Overview Cards */}
       <div className="status-overview">
-        <div className="status-card open">
+        <div 
+          className="status-card open clickable" 
+          onClick={() => handleStatusClick('open')}
+          title="Klicken um offene Aufgaben anzuzeigen"
+        >
           <div className="status-icon">📋</div>
           <div className="status-info">
             <span className="status-number">{statusCounts.open}</span>
@@ -120,7 +146,11 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories }) => {
           </div>
         </div>
 
-        <div className="status-card in-progress">
+        <div 
+          className="status-card in-progress clickable"
+          onClick={() => handleStatusClick('in_progress')}
+          title="Klicken um Aufgaben in Bearbeitung anzuzeigen"
+        >
           <div className="status-icon">⚡</div>
           <div className="status-info">
             <span className="status-number">{statusCounts.inProgress}</span>
@@ -128,7 +158,11 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories }) => {
           </div>
         </div>
 
-        <div className="status-card completed">
+        <div 
+          className="status-card completed clickable"
+          onClick={() => handleStatusClick('completed_today')}
+          title="Klicken um heute erledigte Aufgaben anzuzeigen"
+        >
           <div className="status-icon">✅</div>
           <div className="status-info">
             <span className="status-number">{statusCounts.doneToday}</span>
@@ -136,7 +170,11 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories }) => {
           </div>
         </div>
 
-        <div className="status-card overdue">
+        <div 
+          className="status-card overdue clickable"
+          onClick={() => handleStatusClick('overdue')}
+          title="Klicken um überfällige Aufgaben anzuzeigen"
+        >
           <div className="status-icon">⚠️</div>
           <div className="status-info">
             <span className="status-number">{statusCounts.overdue}</span>
@@ -144,7 +182,11 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories }) => {
           </div>
         </div>
 
-        <div className="status-card this-week">
+        <div 
+          className="status-card this-week clickable"
+          onClick={() => handleStatusClick('this_week')}
+          title="Klicken um Aufgaben dieser Woche anzuzeigen"
+        >
           <div className="status-icon">📅</div>
           <div className="status-info">
             <span className="status-number">{statusCounts.thisWeek}</span>
@@ -158,27 +200,35 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories }) => {
         <div className="category-breakdown">
           <h3 className="section-title">Aktive Aufgaben nach Kategorien</h3>
           <div className="category-bars">
-            {sortedCategories.map(category => (
-              <div key={category.name} className="category-bar-item">
-                <div className="category-info">
-                  <span 
-                    className="category-color-indicator"
-                    style={{ backgroundColor: category.color }}
-                  ></span>
-                  <span className="category-name">{category.name}</span>
-                  <span className="category-count">{category.count}</span>
+            {sortedCategories.map(category => {
+              const categoryId = categories.find(c => c.name === category.name)?.id;
+              return (
+                <div 
+                  key={category.name} 
+                  className="category-bar-item clickable"
+                  onClick={() => categoryId && handleCategoryClick(categoryId)}
+                  title={`Klicken um Aufgaben in Kategorie "${category.name}" anzuzeigen`}
+                >
+                  <div className="category-info">
+                    <span 
+                      className="category-color-indicator"
+                      style={{ backgroundColor: category.color }}
+                    ></span>
+                    <span className="category-name">{category.name}</span>
+                    <span className="category-count">{category.count}</span>
+                  </div>
+                  <div className="category-bar-container">
+                    <div 
+                      className="category-bar-fill"
+                      style={{ 
+                        width: `${(category.count / maxCategoryCount) * 100}%`,
+                        backgroundColor: category.color
+                      }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="category-bar-container">
-                  <div 
-                    className="category-bar-fill"
-                    style={{ 
-                      width: `${(category.count / maxCategoryCount) * 100}%`,
-                      backgroundColor: category.color
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {sortedCategories.every(cat => cat.count === 0) && (
             <p className="no-data">Keine aktiven Aufgaben in Kategorien</p>

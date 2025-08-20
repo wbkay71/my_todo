@@ -6,7 +6,8 @@ import RegisterForm from './components/RegisterForm';
 import TodoList from './components/TodoList';
 import TodoForm from './components/TodoForm';
 import CategoryManagement from './components/CategoryManagement';
-import Dashboard from './components/Dashboard';
+import Dashboard, { TodoFilter } from './components/Dashboard';
+import { isOverdue, isToday } from './utils/timezone';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
   const [showRegister, setShowRegister] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'todos' | 'categories'>('todos');
+  const [todoFilter, setTodoFilter] = useState<TodoFilter>('all');
 
   useEffect(() => {
     checkAuthStatus();
@@ -124,6 +126,63 @@ function App() {
     Promise.all([loadTodos(), loadCategories()]);
   };
 
+  const handleFilterChange = (filter: TodoFilter) => {
+    setTodoFilter(filter);
+  };
+
+  const getFilteredTodos = (): TodoWithCategories[] => {
+    if (todoFilter === 'all') {
+      return todos;
+    }
+
+    return todos.filter(todo => {
+      switch (todoFilter) {
+        case 'open':
+          return todo.status === 'open';
+        case 'in_progress':
+          return todo.status === 'in_progress';
+        case 'completed_today':
+          return todo.status === 'completed' && isToday(todo.updated_at);
+        case 'overdue':
+          return todo.due_date && isOverdue(todo.due_date) && todo.status !== 'completed';
+        case 'this_week':
+          if (!todo.due_date) return false;
+          const today = new Date();
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Montag
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6); // Sonntag
+          const dueDate = new Date(todo.due_date);
+          return dueDate >= startOfWeek && dueDate <= endOfWeek;
+        default:
+          // Category filter
+          if (typeof todoFilter === 'object' && todoFilter.category) {
+            return todo.categories?.some(cat => cat.id === todoFilter.category) || false;
+          }
+          return true;
+      }
+    });
+  };
+
+  const getFilterDisplayName = (): string => {
+    switch (todoFilter) {
+      case 'all': return 'Alle';
+      case 'open': return 'Offen';
+      case 'in_progress': return 'In Bearbeitung';
+      case 'completed_today': return 'Heute erledigt';
+      case 'overdue': return 'Überfällig';
+      case 'this_week': return 'Diese Woche';
+      default:
+        if (typeof todoFilter === 'object' && todoFilter.category) {
+          const category = categories.find(cat => cat.id === todoFilter.category);
+          return category ? `Kategorie: ${category.name}` : 'Unbekannte Kategorie';
+        }
+        return 'Alle';
+    }
+  };
+
+  const filteredTodos = getFilteredTodos();
+
   if (loading) {
     return (
       <div className="app">
@@ -222,10 +281,30 @@ function App() {
         
         {activeTab === 'todos' ? (
           <div className="todo-section">
-            <Dashboard todos={todos} categories={categories} />
+            <Dashboard 
+              todos={todos} 
+              categories={categories} 
+              onFilterChange={handleFilterChange}
+            />
             <TodoForm onCreateTodo={handleCreateTodo} />
+            
+            {/* Filter indicator */}
+            {todoFilter !== 'all' && (
+              <div className="filter-indicator">
+                <span className="filter-text">
+                  Filter aktiv: <strong>{getFilterDisplayName()}</strong>
+                </span>
+                <button 
+                  className="clear-filter-btn"
+                  onClick={() => setTodoFilter('all')}
+                >
+                  Alle anzeigen
+                </button>
+              </div>
+            )}
+            
             <TodoList 
-              todos={todos}
+              todos={filteredTodos}
               onUpdateTodo={handleUpdateTodo}
               onDeleteTodo={handleDeleteTodo}
             />
