@@ -1804,31 +1804,76 @@
 }
 
 .fab-option:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .dashboard-option {
   border-color: #3498db;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 .dashboard-option:hover {
-  background: linear-gradient(135deg, #3498db10, #3498db05);
+  background: linear-gradient(135deg, #3498db15, #3498db08);
   border-color: #2980b9;
+  color: #2980b9;
+}
+
+.dashboard-option:hover::before {
+  left: 100%;
+}
+
+.dashboard-option:hover .fab-option-icon {
+  transform: scale(1.2) rotate(5deg);
 }
 
 .newtodo-option {
   border-color: #27ae60;
+  position: relative;
+  overflow: hidden;
+}
+
+.newtodo-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(39, 174, 96, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 .newtodo-option:hover {
-  background: linear-gradient(135deg, #27ae6010, #27ae6005);
+  background: linear-gradient(135deg, #27ae6015, #27ae6008);
   border-color: #229954;
+  color: #229954;
+}
+
+.newtodo-option:hover::before {
+  left: 100%;
+}
+
+.newtodo-option:hover .fab-option-icon {
+  transform: scale(1.2) rotate(-5deg);
 }
 
 .fab-option-icon {
   font-size: 1.2rem;
   flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fab-option-label {

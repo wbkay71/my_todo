@@ -214,16 +214,20 @@ function App() {
     // Filter zurücksetzen für vollständige Dashboard-Ansicht
     setTodoFilter('all');
     
-    // Zum Dashboard scrollen
+    // Zum Dashboard scrollen mit präziserer Positionierung
     setTimeout(() => {
       const dashboardElement = document.querySelector('.dashboard');
       if (dashboardElement) {
-        dashboardElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
+        // Scroll etwas oberhalb des Dashboards für bessere Sicht
+        const rect = dashboardElement.getBoundingClientRect();
+        const scrollTop = window.pageYOffset + rect.top - 20;
+        
+        window.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
         });
       }
-    }, 100);
+    }, activeTab !== 'todos' ? 200 : 50); // Längere Wartezeit bei Tab-Wechsel
   };
 
   const handleNavigateToNewTodo = () => {
@@ -235,24 +239,36 @@ function App() {
     // Filter zurücksetzen
     setTodoFilter('all');
     
-    // Zum TodoForm scrollen und Focus setzen
+    // Zum TodoForm scrollen und Focus setzen mit präziserer Positionierung
     setTimeout(() => {
       const todoFormElement = document.querySelector('.todo-form');
       if (todoFormElement) {
-        todoFormElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
+        // Scroll etwas oberhalb der Form für bessere Sicht
+        const rect = todoFormElement.getBoundingClientRect();
+        const scrollTop = window.pageYOffset + rect.top - 30;
+        
+        window.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
         });
         
-        // Auto-Focus auf das Titel-Input-Feld
+        // Auto-Focus auf das Titel-Input-Feld mit verbesserter Selektion
         setTimeout(() => {
           const titleInput = document.querySelector('.todo-form input[type="text"]') as HTMLInputElement;
           if (titleInput) {
             titleInput.focus();
+            titleInput.select(); // Selektiert den gesamten Text falls vorhanden
+            
+            // Kleine visuelle Hervorhebung
+            titleInput.style.transition = 'box-shadow 0.3s ease';
+            titleInput.style.boxShadow = '0 0 0 3px rgba(52, 152, 219, 0.3)';
+            setTimeout(() => {
+              titleInput.style.boxShadow = '';
+            }, 1000);
           }
-        }, 300);
+        }, 400); // Etwas länger warten für bessere Scroll-Completion
       }
-    }, 100);
+    }, activeTab !== 'todos' ? 200 : 50); // Längere Wartezeit bei Tab-Wechsel
   };
 
   if (loading) {
