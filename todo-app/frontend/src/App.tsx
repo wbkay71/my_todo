@@ -7,6 +7,7 @@ import TodoList from './components/TodoList';
 import TodoForm from './components/TodoForm';
 import CategoryManagement from './components/CategoryManagement';
 import Dashboard, { TodoFilter } from './components/Dashboard';
+import FloatingActionButton from './components/FloatingActionButton';
 import { isOverdue, isToday } from './utils/timezone';
 import './App.css';
 
@@ -204,6 +205,56 @@ function App() {
 
   const filteredTodos = getFilteredTodos();
 
+  const handleNavigateToDashboard = () => {
+    // Zuerst zum todos Tab wechseln falls nötig
+    if (activeTab !== 'todos') {
+      setActiveTab('todos');
+    }
+    
+    // Filter zurücksetzen für vollständige Dashboard-Ansicht
+    setTodoFilter('all');
+    
+    // Zum Dashboard scrollen
+    setTimeout(() => {
+      const dashboardElement = document.querySelector('.dashboard');
+      if (dashboardElement) {
+        dashboardElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 100);
+  };
+
+  const handleNavigateToNewTodo = () => {
+    // Zuerst zum todos Tab wechseln falls nötig
+    if (activeTab !== 'todos') {
+      setActiveTab('todos');
+    }
+    
+    // Filter zurücksetzen
+    setTodoFilter('all');
+    
+    // Zum TodoForm scrollen und Focus setzen
+    setTimeout(() => {
+      const todoFormElement = document.querySelector('.todo-form');
+      if (todoFormElement) {
+        todoFormElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+        
+        // Auto-Focus auf das Titel-Input-Feld
+        setTimeout(() => {
+          const titleInput = document.querySelector('.todo-form input[type="text"]') as HTMLInputElement;
+          if (titleInput) {
+            titleInput.focus();
+          }
+        }, 300);
+      }
+    }, 100);
+  };
+
   if (loading) {
     return (
       <div className="app">
@@ -334,6 +385,14 @@ function App() {
           <CategoryManagement onCategoryUpdated={handleCategoryUpdated} />
         )}
       </main>
+      
+      {/* Floating Action Button - nur anzeigen wenn eingeloggt */}
+      {user && (
+        <FloatingActionButton
+          onNavigateToDashboard={handleNavigateToDashboard}
+          onNavigateToNewTodo={handleNavigateToNewTodo}
+        />
+      )}
     </div>
   );
 }

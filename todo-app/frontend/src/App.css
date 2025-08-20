@@ -1715,3 +1715,162 @@
     width: 100%;
   }
 }
+
+/* Floating Action Button */
+.fab-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.fab-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  animation: fadeIn 0.2s ease;
+}
+
+.floating-action-button {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1001;
+}
+
+.floating-action-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(52, 152, 219, 0.6);
+}
+
+.floating-action-button.expanded {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  transform: rotate(45deg);
+}
+
+.fab-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab-icon {
+  font-size: 1.5rem;
+  color: white;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.floating-action-button.expanded .fab-icon {
+  transform: rotate(-45deg);
+}
+
+.fab-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-option {
+  background: white;
+  border-radius: 50px;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  min-width: 160px;
+  justify-content: flex-start;
+}
+
+.fab-option:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-option {
+  border-color: #3498db;
+}
+
+.dashboard-option:hover {
+  background: linear-gradient(135deg, #3498db10, #3498db05);
+  border-color: #2980b9;
+}
+
+.newtodo-option {
+  border-color: #27ae60;
+}
+
+.newtodo-option:hover {
+  background: linear-gradient(135deg, #27ae6010, #27ae6005);
+  border-color: #229954;
+}
+
+.fab-option-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.fab-option-label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsiveness for FAB */
+@media (max-width: 768px) {
+  .fab-container {
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  .floating-action-button {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .fab-option {
+    padding: 0.6rem 1.2rem;
+    min-width: 140px;
+  }
+  
+  .fab-option-label {
+    font-size: 0.85rem;
+  }
+}
