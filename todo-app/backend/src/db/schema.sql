@@ -23,16 +23,22 @@ CREATE TABLE todos (
     status VARCHAR(50) DEFAULT 'open',
     priority INTEGER DEFAULT 0,
     due_date DATE,
-    category_id INTEGER,
     created_at DATETIME DEFAULT (datetime('now', 'utc')),
     updated_at DATETIME DEFAULT (datetime('now', 'utc')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE labels (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE todo_categories (
+    todo_id INTEGER,
+    category_id INTEGER,
+    PRIMARY KEY (todo_id, category_id),
+    FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
 CREATE TABLE todo_labels (

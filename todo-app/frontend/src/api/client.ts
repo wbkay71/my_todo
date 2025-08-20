@@ -1,14 +1,19 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import {
-  User,
-  Todo,
-  CreateUserRequest,
-  LoginRequest,
-  CreateTodoRequest,
+import { 
+  User, 
+  Todo, 
+  TodoWithCategories,
+  Category,
+  CreateUserRequest, 
+  LoginRequest, 
+  CreateTodoRequest, 
   UpdateTodoRequest,
-  AuthResponse,
-  TodosResponse,
-  TodoResponse
+  CreateCategoryRequest,
+  AuthResponse, 
+  TodosResponse, 
+  TodoResponse,
+  CategoriesResponse,
+  CategoryResponse
 } from '../types';
 
 class ApiClient {
@@ -148,6 +153,26 @@ class ApiClient {
       storage,
       isPersistent: storage === 'localStorage'
     };
+  }
+
+  // Category-Endpoints
+  async getCategories(): Promise<CategoriesResponse> {
+    const response: AxiosResponse<CategoriesResponse> = await this.api.get('/categories');
+    return response.data;
+  }
+
+  async createCategory(categoryData: CreateCategoryRequest): Promise<CategoryResponse> {
+    const response: AxiosResponse<CategoryResponse> = await this.api.post('/categories', categoryData);
+    return response.data;
+  }
+
+  async updateCategory(id: number, categoryData: Partial<CreateCategoryRequest>): Promise<CategoryResponse> {
+    const response: AxiosResponse<CategoryResponse> = await this.api.patch(`/categories/${id}`, categoryData);
+    return response.data;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await this.api.delete(`/categories/${id}`);
   }
 
   async healthCheck(): Promise<{ status: string; timestamp: string; version: string }> {

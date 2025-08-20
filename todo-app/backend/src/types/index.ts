@@ -24,7 +24,6 @@ export interface Todo {
   status: 'open' | 'in_progress' | 'completed' | 'cancelled';
   priority: number;
   due_date?: string;
-  category_id?: number;
   created_at: string;
   updated_at: string;
 }
@@ -79,7 +78,7 @@ export interface CreateTodoRequest {
   status?: Todo['status'];
   priority?: number;
   due_date?: string;
-  category_id?: number;
+  category_ids?: number[];
 }
 
 export interface UpdateTodoRequest {
@@ -88,7 +87,7 @@ export interface UpdateTodoRequest {
   status?: Todo['status'];
   priority?: number;
   due_date?: string;
-  category_id?: number;
+  category_ids?: number[];
 }
 
 export interface AuthResponse {
@@ -100,8 +99,8 @@ export interface TodoWithLabels extends Todo {
   labels?: Label[];
 }
 
-export interface TodoWithCategory extends Todo {
-  category?: Category;
+export interface TodoWithCategories extends Todo {
+  categories?: Category[];
 }
 
 export interface CategoriesResponse {

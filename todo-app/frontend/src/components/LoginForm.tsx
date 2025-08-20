@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface LoginFormProps {
   onLogin: (credentials: { email: string; password: string; rememberMe?: boolean }) => void;
@@ -9,9 +9,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
+  // E-Mail aus dem localStorage laden (falls vorhanden)
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('lastEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim() && password.trim()) {
+      // E-Mail für zukünftige Logins speichern (sicher)
+      localStorage.setItem('lastEmail', email.trim());
       onLogin({ email: email.trim(), password, rememberMe });
     }
   };
@@ -24,8 +34,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <input
           type="email"
           id="email"
+          name="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
           required
         />
       </div>
@@ -34,8 +46,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <input
           type="password"
           id="password"
+          name="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           required
         />
       </div>

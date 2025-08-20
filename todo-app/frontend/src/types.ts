@@ -17,6 +17,18 @@ export interface Todo {
   updated_at: string;
 }
 
+export interface Category {
+  id: number;
+  name: string;
+  color: string;
+  user_id: number;
+  created_at: string;
+}
+
+export interface TodoWithCategories extends Todo {
+  categories?: Category[];
+}
+
 export interface Label {
   id: number;
   name: string;
@@ -44,6 +56,7 @@ export interface CreateTodoRequest {
   status?: Todo['status'];
   priority?: number;
   due_date?: string;
+  category_ids?: number[];
 }
 
 export interface UpdateTodoRequest {
@@ -52,6 +65,12 @@ export interface UpdateTodoRequest {
   status?: Todo['status'];
   priority?: number;
   due_date?: string;
+  category_ids?: number[];
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  color?: string;
 }
 
 export interface AuthResponse {
@@ -64,9 +83,17 @@ export interface ApiError {
 }
 
 export interface TodosResponse {
-  todos: Todo[];
+  todos: TodoWithCategories[];
 }
 
 export interface TodoResponse {
-  todo: Todo;
+  todo: TodoWithCategories;
+}
+
+export interface CategoriesResponse {
+  categories: Category[];
+}
+
+export interface CategoryResponse {
+  category: Category;
 }

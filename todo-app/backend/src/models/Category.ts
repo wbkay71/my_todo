@@ -89,7 +89,7 @@ export class CategoryModel {
   static getUsageCount = (categoryId: number): number => {
     const stmt = db.prepare(`
       SELECT COUNT(*) as count 
-      FROM todos 
+      FROM todo_categories 
       WHERE category_id = ?
     `);
     const result = stmt.get(categoryId) as { count: number };
@@ -100,9 +100,9 @@ export class CategoryModel {
     const stmt = db.prepare(`
       SELECT 
         c.*,
-        COUNT(t.id) as usage_count
+        COUNT(tc.todo_id) as usage_count
       FROM categories c
-      LEFT JOIN todos t ON c.id = t.category_id
+      LEFT JOIN todo_categories tc ON c.id = tc.category_id
       WHERE c.user_id = ?
       GROUP BY c.id
       ORDER BY c.name ASC

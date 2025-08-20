@@ -1,10 +1,10 @@
 import React from 'react';
-import { Todo } from '../types';
+import { TodoWithCategories } from '../types';
 import TodoItem from './TodoItem';
 
 interface TodoListProps {
-  todos: Todo[];
-  onUpdateTodo: (id: number, updates: Partial<Todo>) => void;
+  todos: TodoWithCategories[];
+  onUpdateTodo: (id: number, updates: Partial<TodoWithCategories>) => void;
   onDeleteTodo: (id: number) => void;
 }
 

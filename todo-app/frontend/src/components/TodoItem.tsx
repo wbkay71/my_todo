@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Todo } from '../types';
+import { TodoWithCategories } from '../types';
 import { formatSmartDate, formatDateOnlyForDisplay, formatDateForInput, isToday } from '../utils/timezone';
+import MultiCategorySelector from './MultiCategorySelector';
 
 interface TodoItemProps {
-  todo: Todo;
-  onUpdateTodo: (id: number, updates: Partial<Todo>) => void;
+  todo: TodoWithCategories;
+  onUpdateTodo: (id: number, updates: Partial<TodoWithCategories>) => void;
   onDeleteTodo: (id: number) => void;
 }
 
@@ -13,8 +14,11 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
   const [editDueDate, setEditDueDate] = useState(todo.due_date ? formatDateForInput(todo.due_date) : '');
+  const [editCategoryIds, setEditCategoryIds] = useState<number[]>(
+    todo.categories ? todo.categories.map(cat => cat.id) : []
+  );
 
-  const handleStatusChange = (newStatus: Todo['status']) => {
+  const handleStatusChange = (newStatus: TodoWithCategories['status']) => {
     onUpdateTodo(todo.id, { status: newStatus });
   };
 
@@ -27,7 +31,8 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
       const updateData = {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
-        due_date: editDueDate || undefined // HTML5 Date gibt bereits YYYY-MM-DD zurück
+        due_date: editDueDate || undefined, // HTML5 Date gibt bereits YYYY-MM-DD zurück
+        category_ids: editCategoryIds
       };
       
       console.log('Updating todo with data:', updateData); // Debug log
@@ -41,6 +46,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
     setEditTitle(todo.title);
     setEditDescription(todo.description || '');
     setEditDueDate(todo.due_date ? formatDateForInput(todo.due_date) : '');
+    setEditCategoryIds(todo.categories ? todo.categories.map(cat => cat.id) : []);
     setIsEditing(false);
   };
 
@@ -52,6 +58,8 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
     if (priority >= 3) return '#ffdd00';
     return '#44aa44';
   };
+
+
 
   return (
     <div className={`todo-item todo-${todo.status}`}>
@@ -77,6 +85,25 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
           </span>
         </div>
       </div>
+
+      {/* Categories - always visible when present */}
+      {todo.categories && todo.categories.length > 0 && (
+        <div className="todo-categories">
+          <div className="categories-display">
+            {todo.categories.map((category) => (
+              <span
+                key={category.id}
+                className="category-badge"
+                style={{ backgroundColor: category.color }}
+              >
+                🏷️ {category.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+
 
       {(todo.description || isEditing) && (
         <div className="todo-description">
@@ -116,11 +143,13 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
         </div>
       )}
 
+
+
       <div className="todo-controls">
         <div className="status-controls">
           <select
             value={todo.status}
-            onChange={(e) => handleStatusChange(e.target.value as Todo['status'])}
+            onChange={(e) => handleStatusChange(e.target.value as TodoWithCategory['status'])}
             className="status-select"
           >
             <option value="open">Offen</option>
@@ -172,6 +201,20 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
           )}
         </div>
       </div>
+
+      {/* Categories editor - at the bottom in edit mode */}
+      {isEditing && (
+        <div className="todo-categories-edit" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ecf0f1' }}>
+          <label htmlFor={`categories-${todo.id}`} style={{ fontSize: '0.9rem', color: '#7f8c8d' }}>
+            Kategorien (optional):
+          </label>
+          <MultiCategorySelector
+            selectedCategoryIds={editCategoryIds}
+            onCategoryChange={setEditCategoryIds}
+            showCreateOption={true}
+          />
+        </div>
+      )}
 
       <div className="todo-meta">
         <small>

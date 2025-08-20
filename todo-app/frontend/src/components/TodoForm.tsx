@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import MultiCategorySelector from './MultiCategorySelector';
 
 interface TodoFormProps {
-  onCreateTodo: (todoData: { title: string; description?: string; due_date?: string; priority?: number }) => void;
+  onCreateTodo: (todoData: { title: string; description?: string; due_date?: string; priority?: number; category_ids?: number[] }) => void;
 }
 
 const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
@@ -9,6 +10,11 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState(0);
+  const [categoryIds, setCategoryIds] = useState<number[]>([]);
+
+  const handleCategoryChange = (newCategoryIds: number[]) => {
+    setCategoryIds(newCategoryIds);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,16 +24,16 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
         title: title.trim(),
         description: description.trim() || undefined,
         due_date: dueDate || undefined, // HTML5 Date gibt bereits YYYY-MM-DD zurück
-        priority
+        priority,
+        category_ids: categoryIds.length > 0 ? categoryIds : undefined
       };
-      
-      console.log('Sending todo data:', todoData); // Debug log
       
       onCreateTodo(todoData);
       setTitle('');
       setDescription('');
       setDueDate('');
       setPriority(0);
+      setCategoryIds([]);
     }
   };
 
@@ -64,6 +70,14 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
           onChange={(e) => setDueDate(e.target.value)}
         />
       </div>
+                    <div className="form-group">
+                <label htmlFor="categories">Kategorien (optional):</label>
+                <MultiCategorySelector
+                  selectedCategoryIds={categoryIds}
+                  onCategoryChange={handleCategoryChange}
+                  showCreateOption={true}
+                />
+              </div>
       <div className="form-group">
         <label htmlFor="priority">Priorität: {priority}</label>
         <input

@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
 import apiClient from './api/client';
-import { User, Todo } from './types';
+import { User, TodoWithCategories } from './types';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import TodoList from './components/TodoList';
 import TodoForm from './components/TodoForm';
+import CategoryManagement from './components/CategoryManagement';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useState<TodoWithCategories[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'todos' | 'categories'>('todos');
 
   useEffect(() => {
     checkAuthStatus();
@@ -73,7 +75,13 @@ function App() {
     console.log('Benutzer erfolgreich abgemeldet');
   };
 
-  const handleCreateTodo = async (todoData: { title: string; description?: string; due_date?: string; priority?: number }) => {
+  const handleLogoutAndForget = () => {
+    // E-Mail auch vergessen (für anderen Benutzer)
+    localStorage.removeItem('lastEmail');
+    handleLogout();
+  };
+
+  const handleCreateTodo = async (todoData: { title: string; description?: string; due_date?: string; priority?: number; category_ids?: number[] }) => {
     try {
       const { todo } = await apiClient.createTodo(todoData);
       setTodos([todo, ...todos]);
@@ -82,7 +90,7 @@ function App() {
     }
   };
 
-  const handleUpdateTodo = async (id: number, updates: Partial<Todo>) => {
+  const handleUpdateTodo = async (id: number, updates: Partial<TodoWithCategories>) => {
     try {
       const { todo } = await apiClient.updateTodo(id, updates);
       setTodos(todos.map(t => t.id === id ? todo : t));
@@ -98,6 +106,11 @@ function App() {
     } catch (error: any) {
       setError(error.response?.data?.error || 'Fehler beim Löschen des Todos');
     }
+  };
+
+  const handleCategoryUpdated = () => {
+    // Refresh todos to get updated category information
+    loadTodos();
   };
 
   if (loading) {
@@ -166,23 +179,48 @@ function App() {
               <span className="session-indicator">🔐 Dauerhaft angemeldet</span>
             )}
           </div>
-          <button onClick={handleLogout} className="logout-button" title="Abmelden">
-            Abmelden
-          </button>
+          <div className="logout-dropdown">
+            <button onClick={handleLogout} className="logout-button" title="Abmelden">
+              Abmelden
+            </button>
+            <button onClick={handleLogoutAndForget} className="logout-forget-button" title="Abmelden und E-Mail vergessen">
+              Anderer Benutzer
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* Tab Navigation */}
+      <nav className="tab-navigation">
+        <button 
+          className={`tab-button ${activeTab === 'todos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('todos')}
+        >
+          📝 Todos ({todos.length})
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'categories' ? 'active' : ''}`}
+          onClick={() => setActiveTab('categories')}
+        >
+          🏷️ Kategorien
+        </button>
+      </nav>
 
       <main className="app-main">
         {error && <div className="error">{error}</div>}
         
-        <div className="todo-section">
-          <TodoForm onCreateTodo={handleCreateTodo} />
-          <TodoList 
-            todos={todos}
-            onUpdateTodo={handleUpdateTodo}
-            onDeleteTodo={handleDeleteTodo}
-          />
-        </div>
+        {activeTab === 'todos' ? (
+          <div className="todo-section">
+            <TodoForm onCreateTodo={handleCreateTodo} />
+            <TodoList 
+              todos={todos}
+              onUpdateTodo={handleUpdateTodo}
+              onDeleteTodo={handleDeleteTodo}
+            />
+          </div>
+        ) : (
+          <CategoryManagement onCategoryUpdated={handleCategoryUpdated} />
+        )}
       </main>
     </div>
   );

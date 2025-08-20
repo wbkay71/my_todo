@@ -18,7 +18,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       return;
     }
 
-    const { status, priority, include_labels, include_category } = req.query;
+    const { status, priority, include_labels } = req.query;
 
     let todos;
 
@@ -33,9 +33,8 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       }
     } else if (include_labels === 'true') {
       todos = TodoModel.findByUserIdWithLabels(req.user.id);
-    } else if (include_category === 'true') {
-      todos = TodoModel.findByUserIdWithCategory(req.user.id);
     } else {
+      // Default: Always return todos with categories
       todos = TodoModel.findByUserId(req.user.id);
     }
 
@@ -106,7 +105,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       return;
     }
 
-    const { title, description, status, priority, due_date, category_id }: CreateTodoRequest = req.body;
+    const { title, description, status, priority, due_date, category_ids }: CreateTodoRequest = req.body;
 
     // Validierung
     if (!title || title.trim().length === 0) {
@@ -149,15 +148,17 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       }
     }
 
-    // Category validieren falls vorhanden
-    if (category_id !== undefined && category_id !== null) {
+    // Categories validieren falls vorhanden
+    if (category_ids && category_ids.length > 0) {
       const CategoryModel = await import('../models/Category');
-      const category = CategoryModel.CategoryModel.findById(category_id);
-      if (!category || category.user_id !== req.user.id) {
-        res.status(400).json({ 
-          error: 'Ungültige Kategorie-ID oder Kategorie gehört nicht dem Benutzer' 
-        });
-        return;
+      for (const categoryId of category_ids) {
+        const category = CategoryModel.CategoryModel.findById(categoryId);
+        if (!category || category.user_id !== req.user.id) {
+          res.status(400).json({ 
+            error: `Ungültige Kategorie-ID ${categoryId} oder Kategorie gehört nicht dem Benutzer` 
+          });
+          return;
+        }
       }
     }
 
@@ -167,7 +168,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       status,
       priority,
       due_date,
-      category_id
+      category_ids
     });
 
     res.status(201).json({ todo: newTodo });
@@ -197,7 +198,7 @@ router.patch('/:id', async (req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    const { title, description, status, priority, due_date, category_id }: UpdateTodoRequest = req.body;
+    const { title, description, status, priority, due_date, category_ids }: UpdateTodoRequest = req.body;
 
     // Validierung
     if (title !== undefined && (title.trim().length === 0 || title.length > 255)) {
@@ -232,15 +233,17 @@ router.patch('/:id', async (req: AuthenticatedRequest, res: Response): Promise<v
       }
     }
 
-    // Category validieren falls vorhanden
-    if (category_id !== undefined && category_id !== null) {
+    // Categories validieren falls vorhanden
+    if (category_ids && category_ids.length > 0) {
       const CategoryModel = await import('../models/Category');
-      const category = CategoryModel.CategoryModel.findById(category_id);
-      if (!category || category.user_id !== req.user.id) {
-        res.status(400).json({ 
-          error: 'Ungültige Kategorie-ID oder Kategorie gehört nicht dem Benutzer' 
-        });
-        return;
+      for (const categoryId of category_ids) {
+        const category = CategoryModel.CategoryModel.findById(categoryId);
+        if (!category || category.user_id !== req.user.id) {
+          res.status(400).json({ 
+            error: `Ungültige Kategorie-ID ${categoryId} oder Kategorie gehört nicht dem Benutzer` 
+          });
+          return;
+        }
       }
     }
 
@@ -250,7 +253,7 @@ router.patch('/:id', async (req: AuthenticatedRequest, res: Response): Promise<v
       status,
       priority,
       due_date,
-      category_id
+      category_ids
     });
 
     if (!updatedTodo) {

@@ -1,22 +1,29 @@
 import db from '../db/database';
-import { Todo, CreateTodoRequest, UpdateTodoRequest, TodoWithLabels, TodoWithCategory, Label, Category } from '../types';
+import { Todo, CreateTodoRequest, UpdateTodoRequest, TodoWithLabels, TodoWithCategories, Label, Category } from '../types';
 
 export class TodoModel {
-  static create = (userId: number, todoData: CreateTodoRequest): Todo => {
-    const { title, description, status = 'open', priority = 0, due_date, category_id } = todoData;
+  static create = (userId: number, todoData: CreateTodoRequest): TodoWithCategories => {
+    const { title, description, status = 'open', priority = 0, due_date, category_ids = [] } = todoData;
 
     const nowUtc = new Date().toISOString();
     
     const stmt = db.prepare(`
-      INSERT INTO todos (user_id, title, description, status, priority, due_date, category_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO todos (user_id, title, description, status, priority, due_date, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     // Verwende JavaScript UTC-Zeit statt SQLite-Funktion
     const utcTimestamp = nowUtc.replace('T', ' ').replace('Z', '');
-    const result = stmt.run(userId, title, description || null, status, priority, due_date || null, category_id || null, utcTimestamp, utcTimestamp);
+    const result = stmt.run(userId, title, description || null, status, priority, due_date || null, utcTimestamp, utcTimestamp);
     
-    const createdTodo = this.findById(result.lastInsertRowid as number)!;
+    const todoId = result.lastInsertRowid as number;
+    
+    // Add category relationships
+    if (category_ids.length > 0) {
+      this.updateTodoCategories(todoId, category_ids);
+    }
+    
+    const createdTodo = this.findByIdWithCategories(todoId)!;
     
     return createdTodo;
   };
@@ -26,17 +33,64 @@ export class TodoModel {
     return stmt.get(id) as Todo | null;
   };
 
-  static findByUserId = (userId: number): Todo[] => {
+  static findByIdWithCategories = (id: number): TodoWithCategories | null => {
+    const todo = this.findById(id);
+    if (!todo) return null;
+
+    const categories = this.getTodoCategories(id);
+    return { ...todo, categories };
+  };
+
+  static getTodoCategories = (todoId: number): Category[] => {
+    const stmt = db.prepare(`
+      SELECT c.* FROM categories c
+      JOIN todo_categories tc ON c.id = tc.category_id
+      WHERE tc.todo_id = ?
+    `);
+    return stmt.all(todoId) as Category[];
+  };
+
+  static updateTodoCategories = (todoId: number, categoryIds: number[]): void => {
+    // Remove existing category relationships
+    const deleteStmt = db.prepare('DELETE FROM todo_categories WHERE todo_id = ?');
+    deleteStmt.run(todoId);
+
+    // Add new category relationships
+    if (categoryIds.length > 0) {
+      const insertStmt = db.prepare('INSERT INTO todo_categories (todo_id, category_id) VALUES (?, ?)');
+      const insertMany = db.transaction((categories: number[]) => {
+        for (const categoryId of categories) {
+          insertStmt.run(todoId, categoryId);
+        }
+      });
+      insertMany(categoryIds);
+    }
+  };
+
+  static findByUserId = (userId: number): TodoWithCategories[] => {
     const stmt = db.prepare(`
       SELECT * FROM todos 
       WHERE user_id = ? 
       ORDER BY created_at DESC
     `);
-    return stmt.all(userId) as Todo[];
+    
+    const todos = stmt.all(userId) as Todo[];
+    const result = todos.map(todo => {
+      const categories = this.getTodoCategories(todo.id);
+      return { ...todo, categories };
+    });
+    
+    return result;
   };
 
   static findByUserIdWithLabels = (userId: number): TodoWithLabels[] => {
-    const todos = this.findByUserId(userId);
+    const stmt = db.prepare(`
+      SELECT * FROM todos 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC
+    `);
+    
+    const todos = stmt.all(userId) as Todo[];
     
     return todos.map(todo => {
       const labels = this.getLabelsForTodo(todo.id);
@@ -44,59 +98,16 @@ export class TodoModel {
     });
   };
 
-  static findByUserIdWithCategory = (userId: number): TodoWithCategory[] => {
-    const stmt = db.prepare(`
-      SELECT 
-        t.*,
-        c.id as category_id,
-        c.name as category_name,
-        c.color as category_color,
-        c.user_id as category_user_id,
-        c.created_at as category_created_at
-      FROM todos t
-      LEFT JOIN categories c ON t.category_id = c.id
-      WHERE t.user_id = ? 
-      ORDER BY t.created_at DESC
-    `);
-    
-    const rows = stmt.all(userId) as any[];
-    
-          return rows.map(row => {
-      const todo: TodoWithCategory = {
-        id: row.id,
-        user_id: row.user_id,
-        title: row.title,
-        description: row.description,
-        status: row.status,
-        priority: row.priority,
-        due_date: row.due_date,
-        category_id: row.category_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at
-      };
 
-      if (row.category_id) {
-        todo.category = {
-          id: row.category_id,
-          name: row.category_name,
-          color: row.category_color,
-          user_id: row.category_user_id,
-          created_at: row.category_created_at
-        };
-      }
 
-      return todo;
-    });
-  };
-
-  static update = (id: number, userId: number, todoData: UpdateTodoRequest): Todo | null => {
+  static update = (id: number, userId: number, todoData: UpdateTodoRequest): TodoWithCategories | null => {
     // Prüfe ob Todo dem User gehört
     const existingTodo = this.findById(id);
     if (!existingTodo || existingTodo.user_id !== userId) {
       return null;
     }
 
-    const { title, description, status, priority, due_date, category_id } = todoData;
+    const { title, description, status, priority, due_date, category_ids } = todoData;
     const updates: string[] = [];
     const values: any[] = [];
 
@@ -120,26 +131,33 @@ export class TodoModel {
       updates.push('due_date = ?');
       values.push(due_date);
     }
-    if (category_id !== undefined) {
-      updates.push('category_id = ?');
-      values.push(category_id);
+    if (updates.length === 0 && category_ids === undefined) {
+      return this.findByIdWithCategories(id);
     }
 
-    if (updates.length === 0) {
-      return existingTodo;
+    // Update category relationships if provided
+    if (category_ids !== undefined) {
+      this.updateTodoCategories(id, category_ids);
     }
 
-    updates.push('updated_at = CURRENT_TIMESTAMP');
-    values.push(id);
+    // Update todo fields if any
+    if (updates.length > 0) {
+      const nowUtc = new Date().toISOString();
+      const utcTimestamp = nowUtc.replace('T', ' ').replace('Z', '');
+      updates.push('updated_at = ?');
+      values.push(utcTimestamp);
+      values.push(id);
 
-    const stmt = db.prepare(`
-      UPDATE todos 
-      SET ${updates.join(', ')} 
-      WHERE id = ?
-    `);
+      const stmt = db.prepare(`
+        UPDATE todos 
+        SET ${updates.join(', ')} 
+        WHERE id = ?
+      `);
 
-    stmt.run(...values);
-    return this.findById(id);
+      stmt.run(...values);
+    }
+
+    return this.findByIdWithCategories(id);
   };
 
   static delete = (id: number, userId: number): boolean => {
