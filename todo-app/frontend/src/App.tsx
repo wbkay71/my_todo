@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import apiClient from './api/client';
-import { User, TodoWithCategories } from './types';
+import { User, TodoWithCategories, Category } from './types';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import TodoList from './components/TodoList';
 import TodoForm from './components/TodoForm';
 import CategoryManagement from './components/CategoryManagement';
+import Dashboard from './components/Dashboard';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [todos, setTodos] = useState<TodoWithCategories[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ function App() {
       if (apiClient.isAuthenticated()) {
         const { user } = await apiClient.getCurrentUser();
         setUser(user);
-        await loadTodos();
+        await Promise.all([loadTodos(), loadCategories()]);
       }
     } catch (error) {
       console.error('Auth-Fehler:', error);
@@ -42,6 +44,15 @@ function App() {
     } catch (error) {
       console.error('Fehler beim Laden der Todos:', error);
       setError('Fehler beim Laden der Todos');
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const { categories } = await apiClient.getCategories();
+      setCategories(categories);
+    } catch (error) {
+      console.error('Fehler beim Laden der Kategorien:', error);
     }
   };
 
@@ -109,8 +120,8 @@ function App() {
   };
 
   const handleCategoryUpdated = () => {
-    // Refresh todos to get updated category information
-    loadTodos();
+    // Refresh todos and categories to get updated information
+    Promise.all([loadTodos(), loadCategories()]);
   };
 
   if (loading) {
@@ -211,6 +222,7 @@ function App() {
         
         {activeTab === 'todos' ? (
           <div className="todo-section">
+            <Dashboard todos={todos} categories={categories} />
             <TodoForm onCreateTodo={handleCreateTodo} />
             <TodoList 
               todos={todos}
