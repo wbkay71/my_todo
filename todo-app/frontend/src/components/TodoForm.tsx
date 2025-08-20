@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MultiCategorySelector from './MultiCategorySelector';
-import { convertLocalDateTimeToUTC, roundToQuarterHour } from '../utils/timezone';
+import TimeSelector from './TimeSelector';
+import { convertLocalDateTimeToUTC, splitDateTime, combineDateTime } from '../utils/timezone';
 
 interface TodoFormProps {
   onCreateTodo: (todoData: { title: string; description?: string; due_date?: string; priority?: number; category_ids?: number[] }) => void;
@@ -10,6 +11,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [dueTime, setDueTime] = useState('');
   const [priority, setPriority] = useState(0);
   const [categoryIds, setCategoryIds] = useState<number[]>([]);
 
@@ -21,10 +23,11 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
     e.preventDefault();
     
     if (title.trim()) {
+      const dueDateTimeString = combineDateTime(dueDate, dueTime);
       const todoData = {
         title: title.trim(),
         description: description.trim() || undefined,
-        due_date: dueDate ? convertLocalDateTimeToUTC(dueDate) : undefined,
+        due_date: dueDateTimeString ? convertLocalDateTimeToUTC(dueDateTimeString) : undefined,
         priority,
         category_ids: categoryIds.length > 0 ? categoryIds : undefined
       };
@@ -33,6 +36,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
       setTitle('');
       setDescription('');
       setDueDate('');
+      setDueTime('');
       setPriority(0);
       setCategoryIds([]);
     }
@@ -63,12 +67,13 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
         />
       </div>
       <div className="form-group">
-        <label htmlFor="dueDate">Fälligkeitsdatum mit Uhrzeit (optional):</label>
-        <input
-          type="datetime-local"
-          id="dueDate"
-          value={dueDate}
-          onChange={(e) => setDueDate(roundToQuarterHour(e.target.value))}
+        <TimeSelector
+          date={dueDate}
+          time={dueTime}
+          onDateChange={setDueDate}
+          onTimeChange={setDueTime}
+          label="Fälligkeitsdatum mit Uhrzeit (optional)"
+          id="dueDateTime"
         />
       </div>
                     <div className="form-group">

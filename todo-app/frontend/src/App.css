@@ -1061,6 +1061,56 @@
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
+/* Time Selector */
+.time-selector {
+  width: 100%;
+}
+
+.time-selector label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.datetime-inputs {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.date-input, .time-input {
+  padding: 0.5rem;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 120px;
+}
+
+.date-input:focus, .time-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.time-input {
+  min-width: 140px;
+}
+
+@media (max-width: 600px) {
+  .datetime-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .date-input, .time-input {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
 /* Main Content */
 .app-main {
   flex: 1;

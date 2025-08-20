@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { TodoWithCategories } from '../types';
-import { formatSmartDate, formatSmartDueDate, formatDateTimeForInput, isToday, isOverdue, getHoursUntilDue, convertLocalDateTimeToUTC, roundToQuarterHour } from '../utils/timezone';
+import { formatSmartDate, formatSmartDueDate, formatDateTimeForInput, isToday, isOverdue, getHoursUntilDue, convertLocalDateTimeToUTC, splitDateTime, combineDateTime } from '../utils/timezone';
 import MultiCategorySelector from './MultiCategorySelector';
+import TimeSelector from './TimeSelector';
 
 interface TodoItemProps {
   todo: TodoWithCategories;
@@ -13,7 +14,10 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
-  const [editDueDate, setEditDueDate] = useState(todo.due_date ? formatDateTimeForInput(todo.due_date) : '');
+  const editDateTime = todo.due_date ? formatDateTimeForInput(todo.due_date) : '';
+  const { date: editDueDateOnly, time: editDueTimeOnly } = splitDateTime(editDateTime);
+  const [editDueDate, setEditDueDate] = useState(editDueDateOnly);
+  const [editDueTime, setEditDueTime] = useState(editDueTimeOnly);
   const [editCategoryIds, setEditCategoryIds] = useState<number[]>(
     todo.categories ? todo.categories.map(cat => cat.id) : []
   );
@@ -28,10 +32,11 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
 
   const handleSaveEdit = () => {
     if (editTitle.trim()) {
+      const dueDateTimeString = combineDateTime(editDueDate, editDueTime);
       const updateData = {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
-        due_date: editDueDate ? convertLocalDateTimeToUTC(editDueDate) : undefined,
+        due_date: dueDateTimeString ? convertLocalDateTimeToUTC(dueDateTimeString) : undefined,
         category_ids: editCategoryIds
       };
       
@@ -45,7 +50,10 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
   const handleCancelEdit = () => {
     setEditTitle(todo.title);
     setEditDescription(todo.description || '');
-    setEditDueDate(todo.due_date ? formatDateTimeForInput(todo.due_date) : '');
+    const resetDateTime = todo.due_date ? formatDateTimeForInput(todo.due_date) : '';
+    const { date: resetDate, time: resetTime } = splitDateTime(resetDateTime);
+    setEditDueDate(resetDate);
+    setEditDueTime(resetTime);
     setEditCategoryIds(todo.categories ? todo.categories.map(cat => cat.id) : []);
     setIsEditing(false);
   };
@@ -124,16 +132,14 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
       {(todo.due_date || isEditing) && (
         <div className="todo-due-date">
           {isEditing ? (
-            <>
-              <label htmlFor={`dueDate-${todo.id}`}>Fälligkeitsdatum mit Uhrzeit:</label>
-              <input
-                type="datetime-local"
-                id={`dueDate-${todo.id}`}
-                value={editDueDate}
-                onChange={(e) => setEditDueDate(roundToQuarterHour(e.target.value))}
-                className="edit-due-date-input"
-              />
-            </>
+            <TimeSelector
+              date={editDueDate}
+              time={editDueTime}
+              onDateChange={setEditDueDate}
+              onTimeChange={setEditDueTime}
+              label="Fälligkeitsdatum mit Uhrzeit"
+              id={`dueDateTime-${todo.id}`}
+            />
           ) : todo.due_date && (
             <div className={`due-date-display ${isOverdue(todo.due_date) ? 'due-overdue' : isToday(todo.due_date) ? 'due-today' : ''}`}>
               📅 {formatSmartDueDate(todo.due_date)}

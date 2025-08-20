@@ -332,6 +332,31 @@ export const roundToQuarterHour = (dateTimeString: string): string => {
 };
 
 /**
+ * Trennt ein datetime-local String in Datum und Zeit
+ */
+export const splitDateTime = (dateTimeString: string): { date: string; time: string } => {
+  if (!dateTimeString) return { date: '', time: '' };
+  
+  try {
+    const [date, time] = dateTimeString.split('T');
+    return { date: date || '', time: time || '' };
+  } catch (error) {
+    console.error('Fehler beim Trennen von Datum und Zeit:', error);
+    return { date: '', time: '' };
+  }
+};
+
+/**
+ * Kombiniert Datum und Zeit zu einem datetime-local String
+ */
+export const combineDateTime = (date: string, time: string): string => {
+  if (!date) return '';
+  if (!time) return date; // Nur Datum ohne Zeit
+  
+  return `${date}T${time}`;
+};
+
+/**
  * Konvertiert lokales DateTime zu UTC für Backend
  */
 export const convertLocalDateTimeToUTC = (localDateTimeString: string): string => {
@@ -358,6 +383,8 @@ export default {
   convertLocalDateToUTC,
   convertLocalDateTimeToUTC,
   roundToQuarterHour,
+  splitDateTime,
+  combineDateTime,
   formatSmartDate,
   formatSmartDueDate,
   isToday,
