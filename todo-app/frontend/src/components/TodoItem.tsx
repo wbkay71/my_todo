@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Todo } from '../types';
-import { formatSmartDate, formatDateForDisplay, formatDateForInput, isToday } from '../utils/timezone';
+import { formatSmartDate, formatDateOnlyForDisplay, formatDateForInput, isToday } from '../utils/timezone';
 
 interface TodoItemProps {
   todo: Todo;
@@ -109,7 +109,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
             </>
           ) : todo.due_date && (
             <div className={`due-date-display ${isToday(todo.due_date) ? 'due-today' : ''}`}>
-              📅 Fällig: {formatDateForDisplay(todo.due_date)}
+              📅 Fällig: {formatDateOnlyForDisplay(todo.due_date)}
               {isToday(todo.due_date) && <span className="due-today-indicator">Heute!</span>}
             </div>
           )}

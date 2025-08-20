@@ -52,7 +52,8 @@ export const formatDateOnlyForDisplay = (utcDateString: string): string => {
   if (!utcDateString) return '';
   
   try {
-    const date = parseISO(utcDateString);
+    const dateToFormat = normalizeToUTC(utcDateString);
+    const date = parseISO(dateToFormat);
     return formatInTimeZone(date, BERLIN_TIMEZONE, 'dd.MM.yyyy', { locale: de });
   } catch (error) {
     console.error('Fehler beim Formatieren des Datums:', error);
@@ -188,7 +189,7 @@ export const formatSmartDate = (utcDateString: string): string => {
     return `Gestern, ${formatTimeForDisplay(utcDateString)}`;
   }
   
-  return formatDateForDisplay(utcDateString);
+  return formatDateOnlyForDisplay(utcDateString);
 };
 
 export default {
