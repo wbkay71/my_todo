@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MultiCategorySelector from './MultiCategorySelector';
+import { convertLocalDateTimeToUTC } from '../utils/timezone';
 
 interface TodoFormProps {
   onCreateTodo: (todoData: { title: string; description?: string; due_date?: string; priority?: number; category_ids?: number[] }) => void;
@@ -23,7 +24,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
       const todoData = {
         title: title.trim(),
         description: description.trim() || undefined,
-        due_date: dueDate || undefined, // HTML5 Date gibt bereits YYYY-MM-DD zurück
+        due_date: dueDate ? convertLocalDateTimeToUTC(dueDate) : undefined,
         priority,
         category_ids: categoryIds.length > 0 ? categoryIds : undefined
       };
@@ -62,9 +63,9 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
         />
       </div>
       <div className="form-group">
-        <label htmlFor="dueDate">Fälligkeitsdatum (optional):</label>
+        <label htmlFor="dueDate">Fälligkeitsdatum mit Uhrzeit (optional):</label>
         <input
-          type="date"
+          type="datetime-local"
           id="dueDate"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}

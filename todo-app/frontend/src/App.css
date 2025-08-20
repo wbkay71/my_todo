@@ -997,6 +997,70 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* Due Date Styling */
+.todo-due-date {
+  margin: 0.75rem 0;
+}
+
+.due-date-display {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+}
+
+.due-today {
+  color: #e67e22;
+  font-weight: 600;
+}
+
+.due-overdue {
+  color: #e74c3c !important;
+  font-weight: 700;
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+}
+
+.due-today-indicator {
+  background-color: #e67e22;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.due-hours-indicator {
+  background-color: #3498db;
+  color: white;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.edit-due-date-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.edit-due-date-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
 /* Main Content */
 .app-main {
   flex: 1;

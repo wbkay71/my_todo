@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TodoWithCategories } from '../types';
-import { formatSmartDate, formatDateOnlyForDisplay, formatDateForInput, isToday } from '../utils/timezone';
+import { formatSmartDate, formatSmartDueDate, formatDateTimeForInput, isToday, isOverdue, getHoursUntilDue, convertLocalDateTimeToUTC } from '../utils/timezone';
 import MultiCategorySelector from './MultiCategorySelector';
 
 interface TodoItemProps {
@@ -13,7 +13,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
-  const [editDueDate, setEditDueDate] = useState(todo.due_date ? formatDateForInput(todo.due_date) : '');
+  const [editDueDate, setEditDueDate] = useState(todo.due_date ? formatDateTimeForInput(todo.due_date) : '');
   const [editCategoryIds, setEditCategoryIds] = useState<number[]>(
     todo.categories ? todo.categories.map(cat => cat.id) : []
   );
@@ -31,7 +31,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
       const updateData = {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
-        due_date: editDueDate || undefined, // HTML5 Date gibt bereits YYYY-MM-DD zurück
+        due_date: editDueDate ? convertLocalDateTimeToUTC(editDueDate) : undefined,
         category_ids: editCategoryIds
       };
       
@@ -45,7 +45,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
   const handleCancelEdit = () => {
     setEditTitle(todo.title);
     setEditDescription(todo.description || '');
-    setEditDueDate(todo.due_date ? formatDateForInput(todo.due_date) : '');
+    setEditDueDate(todo.due_date ? formatDateTimeForInput(todo.due_date) : '');
     setEditCategoryIds(todo.categories ? todo.categories.map(cat => cat.id) : []);
     setIsEditing(false);
   };
@@ -125,9 +125,9 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
         <div className="todo-due-date">
           {isEditing ? (
             <>
-              <label htmlFor={`dueDate-${todo.id}`}>Fälligkeitsdatum:</label>
+              <label htmlFor={`dueDate-${todo.id}`}>Fälligkeitsdatum mit Uhrzeit:</label>
               <input
-                type="date"
+                type="datetime-local"
                 id={`dueDate-${todo.id}`}
                 value={editDueDate}
                 onChange={(e) => setEditDueDate(e.target.value)}
@@ -135,9 +135,13 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
               />
             </>
           ) : todo.due_date && (
-            <div className={`due-date-display ${isToday(todo.due_date) ? 'due-today' : ''}`}>
-              📅 Fällig: {formatDateOnlyForDisplay(todo.due_date)}
-              {isToday(todo.due_date) && <span className="due-today-indicator">Heute!</span>}
+            <div className={`due-date-display ${isOverdue(todo.due_date) ? 'due-overdue' : isToday(todo.due_date) ? 'due-today' : ''}`}>
+              📅 {formatSmartDueDate(todo.due_date)}
+              {getHoursUntilDue(todo.due_date) > 0 && getHoursUntilDue(todo.due_date) <= 24 && (
+                <span className="due-hours-indicator">
+                  {getHoursUntilDue(todo.due_date) === 1 ? 'in 1 Stunde' : `in ${getHoursUntilDue(todo.due_date)} Stunden`}
+                </span>
+              )}
             </div>
           )}
         </div>

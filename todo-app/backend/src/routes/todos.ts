@@ -136,13 +136,15 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       return;
     }
 
-    // Datum validieren falls vorhanden
+    // DateTime validieren falls vorhanden
     if (due_date) {
-      console.log('Received due_date:', due_date, 'Type:', typeof due_date); // Debug log
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(due_date)) {
+      // Akzeptiere sowohl ISO DateTime (2024-12-20T14:30:00.000Z) als auch Date (2024-12-20)
+      const isoDateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+      const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+      
+      if (!isoDateTimeRegex.test(due_date) && !dateOnlyRegex.test(due_date)) {
         res.status(400).json({ 
-          error: `Ungültiges Datumsformat. Erhalten: "${due_date}". Verwende YYYY-MM-DD` 
+          error: `Ungültiges Datum/Zeit-Format. Erhalten: "${due_date}". Verwende ISO DateTime (YYYY-MM-DDTHH:mm:ss.sssZ) oder Datum (YYYY-MM-DD)` 
         });
         return;
       }
@@ -223,11 +225,13 @@ router.patch('/:id', async (req: AuthenticatedRequest, res: Response): Promise<v
     }
 
     if (due_date) {
-      console.log('Received due_date (update):', due_date, 'Type:', typeof due_date); // Debug log
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(due_date)) {
+      // Akzeptiere sowohl ISO DateTime (2024-12-20T14:30:00.000Z) als auch Date (2024-12-20)
+      const isoDateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+      const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+      
+      if (!isoDateTimeRegex.test(due_date) && !dateOnlyRegex.test(due_date)) {
         res.status(400).json({ 
-          error: `Ungültiges Datumsformat. Erhalten: "${due_date}". Verwende YYYY-MM-DD` 
+          error: `Ungültiges Datum/Zeit-Format. Erhalten: "${due_date}". Verwende ISO DateTime (YYYY-MM-DDTHH:mm:ss.sssZ) oder Datum (YYYY-MM-DD)` 
         });
         return;
       }
