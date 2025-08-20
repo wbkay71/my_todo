@@ -311,6 +311,27 @@ export const getHoursUntilDue = (utcDateString: string): number => {
 };
 
 /**
+ * Rundet eine Zeit auf den nächsten 15-Minuten-Block
+ */
+export const roundToQuarterHour = (dateTimeString: string): string => {
+  if (!dateTimeString) return '';
+  
+  try {
+    const date = new Date(dateTimeString);
+    const minutes = date.getMinutes();
+    const roundedMinutes = Math.round(minutes / 15) * 15;
+    
+    date.setMinutes(roundedMinutes, 0, 0); // Sekunden und Millisekunden auf 0
+    
+    // Zurück zu datetime-local Format
+    return formatInTimeZone(date, BERLIN_TIMEZONE, "yyyy-MM-dd'T'HH:mm");
+  } catch (error) {
+    console.error('Fehler beim Runden auf 15-Minuten:', error);
+    return dateTimeString;
+  }
+};
+
+/**
  * Konvertiert lokales DateTime zu UTC für Backend
  */
 export const convertLocalDateTimeToUTC = (localDateTimeString: string): string => {
@@ -336,6 +357,7 @@ export default {
   formatDateTimeForInput,
   convertLocalDateToUTC,
   convertLocalDateTimeToUTC,
+  roundToQuarterHour,
   formatSmartDate,
   formatSmartDueDate,
   isToday,

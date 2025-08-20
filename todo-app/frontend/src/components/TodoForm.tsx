@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import MultiCategorySelector from './MultiCategorySelector';
-import { convertLocalDateTimeToUTC } from '../utils/timezone';
+import { convertLocalDateTimeToUTC, roundToQuarterHour } from '../utils/timezone';
 
 interface TodoFormProps {
   onCreateTodo: (todoData: { title: string; description?: string; due_date?: string; priority?: number; category_ids?: number[] }) => void;
@@ -68,8 +68,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ onCreateTodo }) => {
           type="datetime-local"
           id="dueDate"
           value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          step="900"
+          onChange={(e) => setDueDate(roundToQuarterHour(e.target.value))}
         />
       </div>
                     <div className="form-group">

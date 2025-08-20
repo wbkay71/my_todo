@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TodoWithCategories } from '../types';
-import { formatSmartDate, formatSmartDueDate, formatDateTimeForInput, isToday, isOverdue, getHoursUntilDue, convertLocalDateTimeToUTC } from '../utils/timezone';
+import { formatSmartDate, formatSmartDueDate, formatDateTimeForInput, isToday, isOverdue, getHoursUntilDue, convertLocalDateTimeToUTC, roundToQuarterHour } from '../utils/timezone';
 import MultiCategorySelector from './MultiCategorySelector';
 
 interface TodoItemProps {
@@ -130,9 +130,8 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo })
                 type="datetime-local"
                 id={`dueDate-${todo.id}`}
                 value={editDueDate}
-                onChange={(e) => setEditDueDate(e.target.value)}
+                onChange={(e) => setEditDueDate(roundToQuarterHour(e.target.value))}
                 className="edit-due-date-input"
-                step="900"
               />
             </>
           ) : todo.due_date && (
