@@ -393,7 +393,11 @@ function App() {
             />
           </div>
         ) : (
-          <CategoryManagement onCategoryUpdated={handleCategoryUpdated} />
+          <CategoryManagement 
+            onCategoryUpdated={handleCategoryUpdated}
+            onFilterChange={handleFilterChange}
+            onSwitchToTodos={() => setActiveTab('todos')}
+          />
         )}
       </main>
       

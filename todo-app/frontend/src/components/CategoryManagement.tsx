@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Category, TodoWithCategories } from '../types';
+import { TodoFilter } from './Dashboard';
 import apiClient from '../api/client';
 
 interface CategoryManagementProps {
   onCategoryUpdated?: () => void;
+  onFilterChange?: (filter: TodoFilter) => void;
+  onSwitchToTodos?: () => void;
 }
 
 interface CategoryStats {
@@ -16,7 +19,7 @@ interface CategoryStats {
   };
 }
 
-const CategoryManagement: React.FC<CategoryManagementProps> = ({ onCategoryUpdated }) => {
+const CategoryManagement: React.FC<CategoryManagementProps> = ({ onCategoryUpdated, onFilterChange, onSwitchToTodos }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +161,20 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ onCategoryUpdat
       onCategoryUpdated?.();
     } catch (error: any) {
       setError(error.response?.data?.error || 'Fehler beim Löschen der Kategorie');
+    }
+  };
+
+  const handleCategoryClick = (categoryId: number) => {
+    if (onFilterChange && onSwitchToTodos) {
+      onFilterChange({ category: categoryId });
+      onSwitchToTodos();
+    }
+  };
+
+  const handleStatusClick = (status: 'open' | 'in_progress' | 'completed' | 'cancelled') => {
+    if (onFilterChange && onSwitchToTodos) {
+      onFilterChange(status);
+      onSwitchToTodos();
     }
   };
 
@@ -307,8 +324,10 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ onCategoryUpdat
                   <div className="category-display">
                     <div className="category-info">
                       <span
-                        className="category-badge large"
+                        className="category-badge large clickable"
                         style={{ backgroundColor: category.color }}
+                        onClick={() => handleCategoryClick(category.id)}
+                        title={`Klicken um Todos in Kategorie "${category.name}" anzuzeigen`}
                       >
                         🏷️ {category.name}
                       </span>
@@ -326,22 +345,38 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ onCategoryUpdat
                           </div>
                           <div className="stats-breakdown">
                             {categoryStats[category.id].open > 0 && (
-                              <span className="stat-item open">
+                              <span 
+                                className="stat-item open clickable" 
+                                onClick={() => handleStatusClick('open')}
+                                title="Klicken um offene Todos anzuzeigen"
+                              >
                                 🔵 {categoryStats[category.id].open} offen
                               </span>
                             )}
                             {categoryStats[category.id].inProgress > 0 && (
-                              <span className="stat-item in-progress">
+                              <span 
+                                className="stat-item in-progress clickable"
+                                onClick={() => handleStatusClick('in_progress')}
+                                title="Klicken um Todos in Bearbeitung anzuzeigen"
+                              >
                                 🟡 {categoryStats[category.id].inProgress} in Bearbeitung
                               </span>
                             )}
                             {categoryStats[category.id].completed > 0 && (
-                              <span className="stat-item completed">
+                              <span 
+                                className="stat-item completed clickable"
+                                onClick={() => handleStatusClick('completed')}
+                                title="Klicken um erledigte Todos anzuzeigen"
+                              >
                                 🟢 {categoryStats[category.id].completed} erledigt
                               </span>
                             )}
                             {categoryStats[category.id].cancelled > 0 && (
-                              <span className="stat-item cancelled">
+                              <span 
+                                className="stat-item cancelled clickable"
+                                onClick={() => handleStatusClick('cancelled')}
+                                title="Klicken um abgebrochene Todos anzuzeigen"
+                              >
                                 ⚫ {categoryStats[category.id].cancelled} abgebrochen
                               </span>
                             )}
