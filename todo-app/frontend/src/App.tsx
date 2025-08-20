@@ -128,6 +128,27 @@ function App() {
 
   const handleFilterChange = (filter: TodoFilter) => {
     setTodoFilter(filter);
+    
+    // Scroll zum Filter-Indikator oder TodoList nach kurzer Verzögerung
+    setTimeout(() => {
+      // Zuerst versuchen zum Filter-Indikator zu scrollen (falls vorhanden)
+      const filterIndicator = document.querySelector('.filter-indicator');
+      if (filterIndicator && filter !== 'all') {
+        filterIndicator.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      } else {
+        // Fallback zur TodoList
+        const todoListElement = document.querySelector('.todo-list');
+        if (todoListElement) {
+          todoListElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }
+    }, 150); // Etwas länger warten, damit Filter-Indikator geladen ist
   };
 
   const getFilteredTodos = (): TodoWithCategories[] => {
