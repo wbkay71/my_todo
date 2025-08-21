@@ -8,6 +8,8 @@ import TodoForm from './components/TodoForm';
 import CategoryManagement from './components/CategoryManagement';
 import Dashboard, { TodoFilter } from './components/Dashboard';
 import FloatingActionButton from './components/FloatingActionButton';
+import Calendar from './components/Calendar';
+import DailyDigest from './components/DailyDigest';
 import { isOverdue, isToday } from './utils/timezone';
 import './App.css';
 
@@ -18,7 +20,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'todos' | 'categories'>('todos');
+  const [activeTab, setActiveTab] = useState<'todos' | 'categories' | 'calendar' | 'digest'>('todos');
   const [todoFilter, setTodoFilter] = useState<TodoFilter>('all');
 
   useEffect(() => {
@@ -285,6 +287,44 @@ function App() {
     }, 200);
   };
 
+    const handleNavigateToCalendar = () => {
+    // Zum Kalender-Tab wechseln
+    setActiveTab('calendar');
+    
+    // Kurz warten und dann zum Calendar scrollen
+    setTimeout(() => {
+      const calendarContainer = document.querySelector('.calendar-container');
+      if (calendarContainer) {
+        calendarContainer.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      } else {
+        // Fallback: Scroll zum Anfang der Seite
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 200);
+  };
+
+  const handleNavigateToDigest = () => {
+    // Zum Daily Digest-Tab wechseln
+    setActiveTab('digest');
+    
+    // Kurz warten und dann zum Daily Digest scrollen
+    setTimeout(() => {
+      const digestContainer = document.querySelector('.daily-digest');
+      if (digestContainer) {
+        digestContainer.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      } else {
+        // Fallback: Scroll zum Anfang der Seite
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 200);
+  };
+
   if (loading) {
     return (
       <div className="app">
@@ -376,6 +416,18 @@ function App() {
         >
           🏷️ Kategorien
         </button>
+        <button 
+          className={`tab-button ${activeTab === 'calendar' ? 'active' : ''}`}
+          onClick={() => setActiveTab('calendar')}
+        >
+          📅 Kalender
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'digest' ? 'active' : ''}`}
+          onClick={() => setActiveTab('digest')}
+        >
+          🎯 Daily Digest
+        </button>
       </nav>
 
       <main className="app-main">
@@ -410,13 +462,27 @@ function App() {
               onUpdateTodo={handleUpdateTodo}
               onDeleteTodo={handleDeleteTodo}
               onNavigateToCategories={handleNavigateToCategories}
+              onNavigateToCalendar={handleNavigateToCalendar}
             />
           </div>
-        ) : (
+        ) : activeTab === 'categories' ? (
           <CategoryManagement 
             onCategoryUpdated={handleCategoryUpdated}
             onFilterChange={handleFilterChange}
             onSwitchToTodos={() => setActiveTab('todos')}
+          />
+        ) : activeTab === 'calendar' ? (
+          <Calendar
+            todos={todos}
+            categories={categories}
+            onUpdateTodo={handleUpdateTodo}
+            onDeleteTodo={handleDeleteTodo}
+            onNavigateToTodos={() => setActiveTab('todos')}
+          />
+        ) : (
+          <DailyDigest
+            todos={todos}
+            categories={categories}
           />
         )}
       </main>
@@ -426,6 +492,9 @@ function App() {
         <FloatingActionButton
           onNavigateToDashboard={handleNavigateToDashboard}
           onNavigateToNewTodo={handleNavigateToNewTodo}
+          onNavigateToCalendar={handleNavigateToCalendar}
+          onNavigateToCategories={handleNavigateToCategories}
+          onNavigateToDigest={handleNavigateToDigest}
         />
       )}
     </div>

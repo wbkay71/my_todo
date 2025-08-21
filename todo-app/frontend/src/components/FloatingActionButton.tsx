@@ -3,11 +3,17 @@ import React, { useState } from 'react';
 interface FloatingActionButtonProps {
   onNavigateToDashboard: () => void;
   onNavigateToNewTodo: () => void;
+  onNavigateToCalendar: () => void;
+  onNavigateToCategories: () => void;
+  onNavigateToDigest: () => void;
 }
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onNavigateToDashboard,
-  onNavigateToNewTodo
+  onNavigateToNewTodo,
+  onNavigateToCalendar,
+  onNavigateToCategories,
+  onNavigateToDigest
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -18,6 +24,21 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 
   const handleNewTodoClick = () => {
     onNavigateToNewTodo();
+    setIsExpanded(false);
+  };
+
+  const handleCalendarClick = () => {
+    onNavigateToCalendar();
+    setIsExpanded(false);
+  };
+
+  const handleCategoriesClick = () => {
+    onNavigateToCategories();
+    setIsExpanded(false);
+  };
+
+  const handleDigestClick = () => {
+    onNavigateToDigest();
     setIsExpanded(false);
   };
 
@@ -63,6 +84,32 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
           >
             <span className="fab-option-icon">➕</span>
             <span className="fab-option-label">Neues Todo</span>
+          </div>
+
+          <div 
+            className="fab-option calendar-option"
+            onClick={handleCalendarClick}
+            title="Zum Kalender springen"
+          >
+            <span className="fab-option-icon">📅</span>
+            <span className="fab-option-label">Kalender</span>
+          </div>
+
+                    <div
+            className="fab-option categories-option"
+            onClick={handleCategoriesClick}
+            title="Zur Kategorienverwaltung springen"
+          >
+            <span className="fab-option-icon">🏷️</span>
+            <span className="fab-option-label">Kategorien</span>
+          </div>
+          <div
+            className="fab-option digest-option"
+            onClick={handleDigestClick}
+            title="Zu Daily Digest springen"
+          >
+            <span className="fab-option-icon">🎯</span>
+            <span className="fab-option-label">Daily Digest</span>
           </div>
         </div>
       )}

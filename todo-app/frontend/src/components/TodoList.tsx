@@ -7,9 +7,10 @@ interface TodoListProps {
   onUpdateTodo: (id: number, updates: Partial<TodoWithCategories>) => void;
   onDeleteTodo: (id: number) => void;
   onNavigateToCategories?: () => void;
+  onNavigateToCalendar?: () => void;
 }
 
-const TodoList: React.FC<TodoListProps> = ({ todos, onUpdateTodo, onDeleteTodo, onNavigateToCategories }) => {
+const TodoList: React.FC<TodoListProps> = ({ todos, onUpdateTodo, onDeleteTodo, onNavigateToCategories, onNavigateToCalendar }) => {
   if (todos.length === 0) {
     return (
       <div className="todo-list">
@@ -52,6 +53,7 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onUpdateTodo, onDeleteTodo, 
                   onUpdateTodo={onUpdateTodo}
                   onDeleteTodo={onDeleteTodo}
                   onNavigateToCategories={onNavigateToCategories}
+                  onNavigateToCalendar={onNavigateToCalendar}
                 />
               ))}
             </div>

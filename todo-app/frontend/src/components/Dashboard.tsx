@@ -1,6 +1,7 @@
 import React from 'react';
 import { TodoWithCategories, Category } from '../types';
 import { isOverdue, isToday } from '../utils/timezone';
+import MiniCalendar from './MiniCalendar';
 
 interface DashboardProps {
   todos: TodoWithCategories[];
@@ -128,6 +129,26 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories, onFilterChange
     }
   };
 
+  const handleDateFilter = (date: Date) => {
+    // Filter todos for specific date - we'll implement this as a special filter
+    if (onFilterChange) {
+      // For now, we'll just go to 'all' and let the parent handle date filtering
+      // In a full implementation, we'd extend TodoFilter to include date ranges
+      onFilterChange('all');
+      
+      // Scroll to todo list after short delay
+      setTimeout(() => {
+        const todoListElement = document.querySelector('.todo-list');
+        if (todoListElement) {
+          todoListElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }, 150);
+    }
+  };
+
   return (
     <div className="dashboard">
       <h2 className="dashboard-title">📊 Dashboard</h2>
@@ -195,46 +216,58 @@ const Dashboard: React.FC<DashboardProps> = ({ todos, categories, onFilterChange
         </div>
       </div>
 
-      {/* Category Breakdown */}
-      {sortedCategories.length > 0 && (
-        <div className="category-breakdown">
-          <h3 className="section-title">Aktive Aufgaben nach Kategorien</h3>
-          <div className="category-bars">
-            {sortedCategories.map(category => {
-              const categoryId = categories.find(c => c.name === category.name)?.id;
-              return (
-                <div 
-                  key={category.name} 
-                  className="category-bar-item clickable"
-                  onClick={() => categoryId && handleCategoryClick(categoryId)}
-                  title={`Klicken um Aufgaben in Kategorie "${category.name}" anzuzeigen`}
-                >
-                  <div className="category-info">
-                    <span 
-                      className="category-color-indicator"
-                      style={{ backgroundColor: category.color }}
-                    ></span>
-                    <span className="category-name">{category.name}</span>
-                    <span className="category-count">{category.count}</span>
+      {/* Dashboard Content Grid */}
+      <div className="dashboard-content">
+        {/* Category Breakdown */}
+        {sortedCategories.length > 0 && (
+          <div className="category-breakdown">
+            <h3 className="section-title">Aktive Aufgaben nach Kategorien</h3>
+            <div className="category-bars">
+              {sortedCategories.map(category => {
+                const categoryId = categories.find(c => c.name === category.name)?.id;
+                return (
+                  <div 
+                    key={category.name} 
+                    className="category-bar-item clickable"
+                    onClick={() => categoryId && handleCategoryClick(categoryId)}
+                    title={`Klicken um Aufgaben in Kategorie "${category.name}" anzuzeigen`}
+                  >
+                    <div className="category-info">
+                      <span 
+                        className="category-color-indicator"
+                        style={{ backgroundColor: category.color }}
+                      ></span>
+                      <span className="category-name">{category.name}</span>
+                      <span className="category-count">{category.count}</span>
+                    </div>
+                    <div className="category-bar-container">
+                      <div 
+                        className="category-bar-fill"
+                        style={{ 
+                          width: `${(category.count / maxCategoryCount) * 100}%`,
+                          backgroundColor: category.color
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="category-bar-container">
-                    <div 
-                      className="category-bar-fill"
-                      style={{ 
-                        width: `${(category.count / maxCategoryCount) * 100}%`,
-                        backgroundColor: category.color
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            {sortedCategories.every(cat => cat.count === 0) && (
+              <p className="no-data">Keine aktiven Aufgaben in Kategorien</p>
+            )}
           </div>
-          {sortedCategories.every(cat => cat.count === 0) && (
-            <p className="no-data">Keine aktiven Aufgaben in Kategorien</p>
-          )}
+        )}
+
+        {/* Mini Calendar Widget */}
+        <div className="mini-calendar-section">
+          <MiniCalendar 
+            todos={todos}
+            categories={categories}
+            onDateFilter={handleDateFilter}
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 };

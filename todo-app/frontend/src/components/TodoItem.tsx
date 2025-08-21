@@ -9,9 +9,10 @@ interface TodoItemProps {
   onUpdateTodo: (id: number, updates: Partial<TodoWithCategories>) => void;
   onDeleteTodo: (id: number) => void;
   onNavigateToCategories?: () => void;
+  onNavigateToCalendar?: () => void;
 }
 
-const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo, onNavigateToCategories }) => {
+const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo, onNavigateToCategories, onNavigateToCalendar }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
@@ -71,7 +72,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo, o
 
 
   return (
-    <div className={`todo-item todo-${todo.status}`}>
+    <div className={`todo-item todo-${todo.status}`} data-todo-id={todo.id}>
       <div className="todo-header">
         {isEditing ? (
           <input
@@ -144,7 +145,11 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo, o
               id={`dueDateTime-${todo.id}`}
             />
           ) : todo.due_date && (
-            <div className={`due-date-display ${isOverdue(todo.due_date) ? 'due-overdue' : isToday(todo.due_date) ? 'due-today' : ''}`}>
+            <div 
+              className={`due-date-display clickable-deadline ${isOverdue(todo.due_date) ? 'due-overdue' : isToday(todo.due_date) ? 'due-today' : ''}`}
+              onClick={onNavigateToCalendar}
+              title="Zum Kalender springen"
+            >
               📅 {formatSmartDueDate(todo.due_date)}
               {getHoursUntilDue(todo.due_date) > 0 && getHoursUntilDue(todo.due_date) <= 24 && (
                 <span className="due-hours-indicator">
