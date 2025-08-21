@@ -53,6 +53,8 @@ const DailyDigest: React.FC<DailyDigestProps> = ({ todos, categories }) => {
 
   const [previewEmail, setPreviewEmail] = useState<string>('');
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const motivationStyles = {
     coach: { emoji: '💪', name: 'Motivational Coach', example: '"Du schaffst das! Jeder Tag ist eine neue Chance!"' },
@@ -65,6 +67,29 @@ const DailyDigest: React.FC<DailyDigestProps> = ({ todos, categories }) => {
 
   const updateSetting = <K extends keyof DigestSettings>(key: K, value: DigestSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const generateTimeOptions = () => {
+    const options = [];
+    
+    // Generate times in 15-minute intervals from 00:00 to 23:45
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeValue = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const ampm = hour < 12 ? 'AM' : 'PM';
+        const minuteStr = minute.toString().padStart(2, '0');
+        
+        const label = `${displayHour}:${minuteStr} ${ampm} (${timeValue})`;
+        
+        options.push({
+          value: timeValue,
+          label: label
+        });
+      }
+    }
+    
+    return options;
   };
 
   const generatePreview = async () => {
@@ -204,6 +229,34 @@ Deine Todo-App
     alert('Test-E-Mail wurde gesendet! 📧\n(In der echten App würde dies eine E-Mail an deine Adresse senden)');
   };
 
+  const closePreview = () => {
+    setPreviewEmail('');
+  };
+
+  const saveSettings = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // In einer echten App würden hier die Einstellungen an das Backend gesendet
+    console.log('Saving settings:', settings);
+    
+    setIsSaving(false);
+    setSaveSuccess(true);
+    
+    // Success message für 3 Sekunden anzeigen
+    setTimeout(() => {
+      setSaveSuccess(false);
+      // Scroll to top nach erfolgreichem Speichern
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth' 
+      });
+    }, 3000);
+  };
+
   return (
     <div className="daily-digest">
       <h2 className="digest-title">🎯 Daily Digest Einstellungen</h2>
@@ -224,12 +277,17 @@ Deine Todo-App
         
         <div className="setting-group">
           <label>Lieferzeit:</label>
-          <input
-            type="time"
+          <select
             value={settings.deliveryTime}
             onChange={(e) => updateSetting('deliveryTime', e.target.value)}
-            className="time-input"
-          />
+            className="time-select"
+          >
+            {generateTimeOptions().map((time) => (
+              <option key={time.value} value={time.value}>
+                {time.label}
+              </option>
+            ))}
+          </select>
           <span className="setting-hint">Jeden Tag um {settings.deliveryTime} Uhr</span>
         </div>
       </div>
@@ -465,7 +523,16 @@ Deine Todo-App
         
         {previewEmail && (
           <div className="email-preview">
-            <h4>📧 E-Mail Vorschau:</h4>
+            <div className="preview-header">
+              <h4>📧 E-Mail Vorschau:</h4>
+              <button 
+                className="close-preview-btn"
+                onClick={closePreview}
+                title="Vorschau schließen"
+              >
+                ✕
+              </button>
+            </div>
             <pre className="preview-content">{previewEmail}</pre>
           </div>
         )}
@@ -473,9 +540,31 @@ Deine Todo-App
 
       {/* Save Button */}
       <div className="digest-actions">
-        <button className="save-settings-btn">
-          💾 Einstellungen speichern
+        <button 
+          className={`save-settings-btn ${saveSuccess ? 'success' : ''}`}
+          onClick={saveSettings}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <span className="saving-spinner">⏳</span>
+              Speichere...
+            </>
+          ) : saveSuccess ? (
+            <>
+              ✅ Erfolgreich gespeichert!
+            </>
+          ) : (
+            <>
+              💾 Einstellungen speichern
+            </>
+          )}
         </button>
+        {saveSuccess && (
+          <div className="save-success-message">
+            Deine Daily Digest Einstellungen wurden gespeichert. Du wirst automatisch nach oben gescrollt...
+          </div>
+        )}
       </div>
     </div>
   );
