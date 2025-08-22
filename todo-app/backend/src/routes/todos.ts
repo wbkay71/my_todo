@@ -105,7 +105,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       return;
     }
 
-    const { title, description, status, priority, due_date, category_ids }: CreateTodoRequest = req.body;
+    const { title, description, status, priority, due_date, category_ids, recurrence_pattern }: CreateTodoRequest = req.body;
 
     // Validierung
     if (!title || title.trim().length === 0) {
@@ -170,7 +170,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       status,
       priority,
       due_date,
-      category_ids
+      category_ids,
+      recurrence_pattern
     });
 
     res.status(201).json({ todo: newTodo });

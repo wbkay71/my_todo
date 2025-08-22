@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TodoWithCategories, Category } from '../types';
+import { isRecurringTodo, getRecurrenceIcon } from '../utils/recurrence';
 
 interface CalendarProps {
   todos: TodoWithCategories[];
@@ -7,6 +8,7 @@ interface CalendarProps {
   onUpdateTodo: (id: number, updates: Partial<TodoWithCategories>) => void;
   onDeleteTodo: (id: number) => void;
   onNavigateToTodos?: () => void;
+  onNavigateToNewTodo?: () => void;
 }
 
 type ViewMode = 'month' | 'week';
@@ -18,7 +20,7 @@ interface CalendarDay {
   todos: TodoWithCategories[];
 }
 
-const Calendar: React.FC<CalendarProps> = ({ todos, categories, onUpdateTodo, onDeleteTodo, onNavigateToTodos }) => {
+const Calendar: React.FC<CalendarProps> = ({ todos, categories, onUpdateTodo, onDeleteTodo, onNavigateToTodos, onNavigateToNewTodo }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -54,6 +56,66 @@ const Calendar: React.FC<CalendarProps> = ({ todos, categories, onUpdateTodo, on
       const todoDate = parseDate(todo.due_date.split('T')[0]);
       return isSameDay(date, todoDate);
     });
+  };
+
+  // Get timeline bars for todos with deadlines
+  const getTimelineBars = (date: Date): Array<{
+    todo: TodoWithCategories;
+    isStart: boolean;
+    isEnd: boolean;
+    isContinuation: boolean;
+    position: 'start' | 'middle' | 'end' | 'single';
+    daysUntilDeadline: number;
+  }> => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const currentDate = new Date(date);
+    currentDate.setHours(0, 0, 0, 0);
+    
+    return todos
+      .filter(todo => todo.due_date && todo.status !== 'completed' && todo.status !== 'cancelled')
+      .map(todo => {
+        const dueDate = parseDate(todo.due_date!.split('T')[0]);
+        
+        // Only show timeline bars for current and future deadlines
+        if (dueDate < today) return null;
+        
+        const isStart = isSameDay(currentDate, today);
+        const isEnd = isSameDay(currentDate, dueDate);
+        const isContinuation = currentDate > today && currentDate < dueDate;
+        
+        if (!isStart && !isEnd && !isContinuation) return null;
+        
+        let position: 'start' | 'middle' | 'end' | 'single';
+        if (isSameDay(today, dueDate)) {
+          position = 'single';
+        } else if (isStart) {
+          position = 'start';
+        } else if (isEnd) {
+          position = 'end';
+        } else {
+          position = 'middle';
+        }
+        
+        const daysUntilDeadline = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        return {
+          todo,
+          isStart,
+          isEnd,
+          isContinuation,
+          position,
+          daysUntilDeadline
+        };
+      })
+      .filter(Boolean) as Array<{
+        todo: TodoWithCategories;
+        isStart: boolean;
+        isEnd: boolean;
+        isContinuation: boolean;
+        position: 'start' | 'middle' | 'end' | 'single';
+        daysUntilDeadline: number;
+      }>;
   };
 
   // Generate calendar days for month view
@@ -248,27 +310,86 @@ const Calendar: React.FC<CalendarProps> = ({ todos, categories, onUpdateTodo, on
               <div className="day-number">{day.date.getDate()}</div>
               
               <div className="day-todos">
-                {day.todos.slice(0, 3).map(todo => {
+                {/* Timeline bars for todos with deadlines */}
+                {getTimelineBars(day.date).slice(0, 3).map((timelineItem, index) => {
+                  const { todo, position, daysUntilDeadline } = timelineItem;
                   const category = todo.categories?.[0];
-                  const backgroundColor = category?.color || '#95a5a6';
+                  const baseColor = category?.color || '#95a5a6';
+                  
+                  // Create urgency-based styling
+                  const urgencyClass = daysUntilDeadline <= 1 ? 'urgent' : 
+                                      daysUntilDeadline <= 3 ? 'warning' : 'normal';
                   
                   return (
                     <div
-                      key={todo.id}
-                      className="todo-bar"
-                      style={{ backgroundColor }}
+                      key={`${todo.id}-${position}`}
+                      className={`timeline-bar timeline-${position} ${urgencyClass}`}
+                      style={{ 
+                        backgroundColor: baseColor,
+                        '--base-color': baseColor 
+                      } as React.CSSProperties}
                       draggable
                       onDragStart={(e) => handleDragStart(e, todo)}
-                      title={`${todo.title}${category ? ` (${category.name})` : ''}`}
+                      title={`${todo.title} - ${position === 'end' ? 'Deadline' : 
+                              position === 'start' ? 'Start' : 'Fortsetzung'} 
+                              (${daysUntilDeadline} Tag${daysUntilDeadline !== 1 ? 'e' : ''} verbleibend)${category ? ` (${category.name})` : ''}`}
                     >
-                      <span className="todo-title">{todo.title}</span>
+                      <span className="timeline-content">
+                        {position === 'start' && (
+                          <>
+                            {isRecurringTodo(todo) && <span className="small-recurring-icon">🔄</span>}
+                            <span className="todo-title">{todo.title}</span>
+                          </>
+                        )}
+                        {position === 'end' && (
+                          <>
+                            <span className="deadline-indicator">⏰</span>
+                            <span className="deadline-days">{daysUntilDeadline}T</span>
+                          </>
+                        )}
+                        {position === 'middle' && (
+                          <div className="continuation-line"></div>
+                        )}
+                        {position === 'single' && (
+                          <>
+                            {isRecurringTodo(todo) && <span className="small-recurring-icon">🔄</span>}
+                            <span className="todo-title">{todo.title}</span>
+                            <span className="deadline-indicator">⏰</span>
+                          </>
+                        )}
+                      </span>
                     </div>
                   );
                 })}
                 
-                {day.todos.length > 3 && (
+                {/* Regular todos without deadlines for this specific date */}
+                {day.todos
+                  .filter(todo => !todo.due_date || todo.status === 'completed' || todo.status === 'cancelled')
+                  .slice(0, Math.max(0, 3 - getTimelineBars(day.date).length))
+                  .map(todo => {
+                    const category = todo.categories?.[0];
+                    const backgroundColor = category?.color || '#95a5a6';
+                    
+                    return (
+                      <div
+                        key={todo.id}
+                        className="todo-bar regular-todo"
+                        style={{ backgroundColor }}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, todo)}
+                        title={`${todo.title}${category ? ` (${category.name})` : ''}`}
+                      >
+                        <span className="todo-title">
+                          {isRecurringTodo(todo) && <span className="small-recurring-icon">🔄</span>}
+                          {todo.title}
+                        </span>
+                      </div>
+                    );
+                  })}
+                
+                {(getTimelineBars(day.date).length + day.todos.filter(todo => !todo.due_date).length) > 3 && (
                   <div className="more-todos">
-                    +{day.todos.length - 3} weitere
+                    +{getTimelineBars(day.date).length + day.todos.filter(todo => !todo.due_date).length - 3} weitere
                   </div>
                 )}
               </div>
@@ -307,7 +428,10 @@ const Calendar: React.FC<CalendarProps> = ({ todos, categories, onUpdateTodo, on
                   return (
                     <div key={todo.id} className="todo-item-detail">
                       <div className="todo-info">
-                        <div className="todo-title-detail">{todo.title}</div>
+                        <div className="todo-title-detail">
+                          {isRecurringTodo(todo) && <span className="small-recurring-icon">🔄</span>}
+                          {todo.title}
+                        </div>
                         {todo.description && (
                           <div className="todo-description-detail">{todo.description}</div>
                         )}
@@ -408,6 +532,22 @@ const Calendar: React.FC<CalendarProps> = ({ todos, categories, onUpdateTodo, on
                   );
                 })
               )}
+              
+              {/* Neues ToDo Button */}
+              <div className="day-modal-actions">
+                <button
+                  className="new-todo-btn"
+                  onClick={() => {
+                    setSelectedDay(null);
+                    if (onNavigateToNewTodo) {
+                      onNavigateToNewTodo();
+                    }
+                  }}
+                  title={`Neues ToDo für ${selectedDay.toLocaleDateString('de-DE')} erstellen`}
+                >
+                  ➕ Neues ToDo für diesen Tag
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -478,6 +478,7 @@ function App() {
             onUpdateTodo={handleUpdateTodo}
             onDeleteTodo={handleDeleteTodo}
             onNavigateToTodos={() => setActiveTab('todos')}
+            onNavigateToNewTodo={handleNavigateToNewTodo}
           />
         ) : (
           <DailyDigest

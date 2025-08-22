@@ -5,6 +5,18 @@ export interface User {
   created_at: string;
 }
 
+export interface RecurrencePattern {
+  type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number; // every X days/weeks/months/years
+  weekdays?: number[]; // 0=Sunday, 1=Monday, etc. for weekly recurrence
+  monthDay?: number; // day of month (1-31) for monthly
+  monthWeek?: number; // which week of month (1-4) for monthly
+  monthWeekday?: number; // which weekday in that week for monthly
+  endType: 'never' | 'date' | 'occurrences';
+  endDate?: string;
+  maxOccurrences?: number;
+}
+
 export interface Todo {
   id: number;
   user_id: number;
@@ -15,6 +27,11 @@ export interface Todo {
   due_date?: string;
   created_at: string;
   updated_at: string;
+  // Recurring task fields
+  recurrence_pattern?: RecurrencePattern;
+  parent_task_id?: number;
+  is_recurring_instance?: boolean;
+  occurrence_count?: number;
 }
 
 export interface Category {
@@ -57,6 +74,7 @@ export interface CreateTodoRequest {
   priority?: number;
   due_date?: string;
   category_ids?: number[];
+  recurrence_pattern?: RecurrencePattern;
 }
 
 export interface UpdateTodoRequest {

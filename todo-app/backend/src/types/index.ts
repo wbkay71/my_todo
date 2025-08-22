@@ -16,6 +16,18 @@ export interface Category {
   created_at: string;
 }
 
+export interface RecurrencePattern {
+  type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;
+  weekdays?: number[];
+  monthDay?: number;
+  monthWeek?: number;
+  monthWeekday?: number;
+  endType: 'never' | 'date' | 'occurrences';
+  endDate?: string;
+  maxOccurrences?: number;
+}
+
 export interface Todo {
   id: number;
   user_id: number;
@@ -26,6 +38,10 @@ export interface Todo {
   due_date?: string;
   created_at: string;
   updated_at: string;
+  recurrence_pattern?: string; // JSON string
+  parent_task_id?: number;
+  is_recurring_instance?: boolean;
+  occurrence_count?: number;
 }
 
 export interface Label {
@@ -79,6 +95,7 @@ export interface CreateTodoRequest {
   priority?: number;
   due_date?: string;
   category_ids?: number[];
+  recurrence_pattern?: RecurrencePattern;
 }
 
 export interface UpdateTodoRequest {

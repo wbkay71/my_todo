@@ -22,10 +22,16 @@ CREATE TABLE todos (
     description TEXT,
     status VARCHAR(50) DEFAULT 'open',
     priority INTEGER DEFAULT 0,
-    due_date DATE,
+    due_date DATETIME,
     created_at DATETIME DEFAULT (datetime('now', 'utc')),
     updated_at DATETIME DEFAULT (datetime('now', 'utc')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    -- Recurring task fields
+    recurrence_pattern TEXT, -- JSON string containing RecurrencePattern
+    parent_task_id INTEGER, -- Reference to original recurring task
+    is_recurring_instance BOOLEAN DEFAULT 0,
+    occurrence_count INTEGER DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_task_id) REFERENCES todos(id) ON DELETE CASCADE
 );
 
 CREATE TABLE labels (

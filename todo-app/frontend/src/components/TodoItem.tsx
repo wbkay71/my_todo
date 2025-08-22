@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TodoWithCategories } from '../types';
 import { formatSmartDate, formatSmartDueDate, formatDateTimeForInput, isToday, isOverdue, getHoursUntilDue, convertLocalDateTimeToUTC, splitDateTime, combineDateTime } from '../utils/timezone';
+import { isRecurringTodo, parseRecurrencePattern, formatRecurrencePattern, getRecurrenceIcon, getNextOccurrenceDate } from '../utils/recurrence';
 import MultiCategorySelector from './MultiCategorySelector';
 import TimeSelector from './TimeSelector';
 
@@ -83,7 +84,14 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo, o
             autoFocus
           />
         ) : (
-          <h4 className="todo-title">{todo.title}</h4>
+          <h4 className="todo-title">
+            {isRecurringTodo(todo) && (
+              <span className="title-recurring-icon" title="Wiederkehrende Aufgabe">
+                🔄
+              </span>
+            )}
+            {todo.title}
+          </h4>
         )}
         
         <div className="todo-priority">
@@ -111,6 +119,43 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdateTodo, onDeleteTodo, o
                 🏷️ {category.name}
               </span>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recurring Task Indicator */}
+      {isRecurringTodo(todo) && (
+        <div className="todo-recurrence">
+          <div className="recurrence-display">
+            {(() => {
+              const pattern = parseRecurrencePattern(todo.recurrence_pattern || null);
+              
+              if (pattern) {
+                // This is the original recurring task
+                const icon = getRecurrenceIcon(pattern);
+                const description = formatRecurrencePattern(pattern);
+                const nextDate = getNextOccurrenceDate(todo);
+                
+                return (
+                  <span className="recurrence-badge original-recurring" title={description}>
+                    {icon} {description}
+                    {nextDate && <span className="next-occurrence"> (nächste: {nextDate})</span>}
+                  </span>
+                );
+              } else if (todo.is_recurring_instance) {
+                // This is an instance of a recurring task
+                return (
+                  <span className="recurrence-badge recurring-instance" title="Teil einer wiederkehrenden Aufgabe">
+                    🔄 Wiederkehrende Aufgabe
+                    {todo.occurrence_count && (
+                      <span className="occurrence-count"> (#{todo.occurrence_count})</span>
+                    )}
+                  </span>
+                );
+              }
+              
+              return null;
+            })()}
           </div>
         </div>
       )}

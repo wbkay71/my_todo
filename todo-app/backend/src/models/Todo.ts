@@ -3,18 +3,34 @@ import { Todo, CreateTodoRequest, UpdateTodoRequest, TodoWithLabels, TodoWithCat
 
 export class TodoModel {
   static create = (userId: number, todoData: CreateTodoRequest): TodoWithCategories => {
-    const { title, description, status = 'open', priority = 0, due_date, category_ids = [] } = todoData;
+    const { title, description, status = 'open', priority = 0, due_date, category_ids = [], recurrence_pattern } = todoData;
 
     const nowUtc = new Date().toISOString();
+    const utcTimestamp = nowUtc.replace('T', ' ').replace('Z', '');
     
     const stmt = db.prepare(`
-      INSERT INTO todos (user_id, title, description, status, priority, due_date, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO todos (user_id, title, description, status, priority, due_date, created_at, updated_at, recurrence_pattern, is_recurring_instance, occurrence_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    // Verwende JavaScript UTC-Zeit statt SQLite-Funktion
-    const utcTimestamp = nowUtc.replace('T', ' ').replace('Z', '');
-    const result = stmt.run(userId, title, description || null, status, priority, due_date || null, utcTimestamp, utcTimestamp);
+    // Convert recurrence pattern to JSON string
+    const recurrenceJson = recurrence_pattern ? JSON.stringify(recurrence_pattern) : null;
+    const isRecurringInstance = 0; // New todos are always original tasks
+    const occurrenceCount = 0;
+
+    const result = stmt.run(
+      userId, 
+      title, 
+      description || null, 
+      status, 
+      priority, 
+      due_date || null, 
+      utcTimestamp, 
+      utcTimestamp,
+      recurrenceJson,
+      isRecurringInstance,
+      occurrenceCount
+    );
     
     const todoId = result.lastInsertRowid as number;
     
@@ -215,5 +231,148 @@ export class TodoModel {
       ORDER BY priority DESC, created_at DESC
     `);
     return stmt.all(userId, minPriority) as Todo[];
+  };
+
+  static createNextRecurringInstance = (parentTodo: Todo): TodoWithCategories | null => {
+    if (!parentTodo.recurrence_pattern) return null;
+
+    const pattern = JSON.parse(parentTodo.recurrence_pattern);
+    const nextDueDate = this.calculateNextDueDate(parentTodo.due_date, pattern, parentTodo.occurrence_count || 0);
+    
+    if (!nextDueDate) return null; // End of recurrence
+
+    const nowUtc = new Date().toISOString();
+    const utcTimestamp = nowUtc.replace('T', ' ').replace('Z', '');
+
+    const stmt = db.prepare(`
+      INSERT INTO todos (user_id, title, description, status, priority, due_date, created_at, updated_at, recurrence_pattern, parent_task_id, is_recurring_instance, occurrence_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const nextOccurrenceCount = (parentTodo.occurrence_count || 0) + 1;
+
+    const result = stmt.run(
+      parentTodo.user_id,
+      parentTodo.title,
+      parentTodo.description,
+      'open', // New instances always start as open
+      parentTodo.priority,
+      nextDueDate,
+      utcTimestamp,
+      utcTimestamp,
+      parentTodo.recurrence_pattern,
+      parentTodo.parent_task_id || parentTodo.id, // Reference to original task
+      1, // is_recurring_instance = true
+      nextOccurrenceCount
+    );
+
+    const todoId = result.lastInsertRowid as number;
+
+    // Copy category relationships from parent
+    const parentCategories = this.getTodoCategories(parentTodo.id);
+    if (parentCategories.length > 0) {
+      this.updateTodoCategories(todoId, parentCategories.map(c => c.id));
+    }
+
+    return this.findByIdWithCategories(todoId)!;
+  };
+
+  static calculateNextDueDate = (currentDueDate: string | null, pattern: any, occurrenceCount: number): string | null => {
+    if (!currentDueDate) return null;
+
+    const currentDate = new Date(currentDueDate);
+    let nextDate = new Date(currentDate);
+
+    // Check end conditions
+    if (pattern.endType === 'occurrences' && pattern.maxOccurrences && occurrenceCount >= pattern.maxOccurrences) {
+      return null;
+    }
+    if (pattern.endType === 'date' && pattern.endDate && currentDate >= new Date(pattern.endDate)) {
+      return null;
+    }
+
+    switch (pattern.type) {
+      case 'daily':
+        nextDate.setDate(nextDate.getDate() + pattern.interval);
+        break;
+      
+      case 'weekly':
+        if (pattern.weekdays && pattern.weekdays.length > 0) {
+          // Find next weekday in the pattern
+          const currentWeekday = currentDate.getDay();
+          const sortedWeekdays = [...pattern.weekdays].sort((a, b) => a - b);
+          
+          let nextWeekday = sortedWeekdays.find(day => day > currentWeekday);
+          let weeksToAdd = 0;
+          
+          if (!nextWeekday) {
+            // Go to next week
+            nextWeekday = sortedWeekdays[0];
+            weeksToAdd = pattern.interval;
+          }
+          
+          const daysToAdd = (nextWeekday - currentWeekday + 7) % 7 || 7 * weeksToAdd;
+          nextDate.setDate(nextDate.getDate() + daysToAdd);
+        } else {
+          nextDate.setDate(nextDate.getDate() + 7 * pattern.interval);
+        }
+        break;
+      
+      case 'monthly':
+        if (pattern.monthDay > 0) {
+          // Specific day of month
+          nextDate.setMonth(nextDate.getMonth() + pattern.interval);
+          nextDate.setDate(pattern.monthDay);
+        } else {
+          // Nth weekday of month
+          nextDate.setMonth(nextDate.getMonth() + pattern.interval);
+          const targetWeekday = pattern.monthWeekday;
+          const targetWeek = pattern.monthWeek;
+          
+          // Calculate the nth occurrence of weekday in the month
+          const firstDay = new Date(nextDate.getFullYear(), nextDate.getMonth(), 1);
+          const firstWeekday = firstDay.getDay();
+          const daysToFirstTarget = (targetWeekday - firstWeekday + 7) % 7;
+          const targetDate = 1 + daysToFirstTarget + (targetWeek - 1) * 7;
+          
+          nextDate.setDate(targetDate);
+        }
+        break;
+      
+      case 'yearly':
+        nextDate.setFullYear(nextDate.getFullYear() + pattern.interval);
+        break;
+      
+      default:
+        return null;
+    }
+
+    return nextDate.toISOString();
+  };
+
+  static handleRecurringTaskCompletion = (todoId: number, userId: number): TodoWithCategories | null => {
+    const todo = this.findById(todoId);
+    if (!todo || todo.user_id !== userId) return null;
+
+    // Mark current instance as completed
+    this.update(todoId, userId, { status: 'completed' });
+
+    // If this is a recurring task, create next instance
+    if (todo.recurrence_pattern && !todo.is_recurring_instance) {
+      // This is the original recurring task
+      return this.createNextRecurringInstance(todo);
+    } else if (todo.is_recurring_instance && todo.parent_task_id) {
+      // This is an instance, check parent for pattern
+      const parentTodo = this.findById(todo.parent_task_id);
+      if (parentTodo && parentTodo.recurrence_pattern) {
+        return this.createNextRecurringInstance({
+          ...parentTodo,
+          due_date: todo.due_date,
+          occurrence_count: todo.occurrence_count
+        });
+      }
+    }
+
+    return null;
   };
 }
