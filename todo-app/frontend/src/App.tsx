@@ -10,10 +10,20 @@ import Dashboard, { TodoFilter } from './components/Dashboard';
 import FloatingActionButton from './components/FloatingActionButton';
 import Calendar from './components/Calendar';
 import DailyDigest from './components/DailyDigest';
+import ThemeToggle from './components/ThemeToggle';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { isOverdue, isToday } from './utils/timezone';
 import './App.css';
 
 function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
+function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [todos, setTodos] = useState<TodoWithCategories[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -392,6 +402,7 @@ function App() {
             )}
           </div>
           <div className="logout-dropdown">
+            <ThemeToggle />
             <button onClick={handleLogout} className="logout-button" title="Abmelden">
               Abmelden
             </button>
